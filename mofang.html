@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D魔方仿真 - 自动还原</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            user-select: none;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+        h1 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #4CAF50;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #2E7D32;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            transition: background 0.2s, transform 0.1s;
+            outline: none;
+        }
+        button:hover:not(:disabled) {
+            background: #4CAF50;
+        }
+        button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        button:disabled {
+            background: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #aaa;
+        }
+        #controls-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .key {
+            display: inline-block;
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            font-family: monospace;
+            color: #ffd700;
+        }
+        #virtual-pad {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 12px;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+        .pad-btn {
+            width: 40px;
+            height: 40px;
+            background: #444;
+            border: 2px solid #555;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .pad-btn:hover {
+            background: #666;
+            border-color: #777;
+        }
+        .pad-btn:active {
+            background: #222;
+        }
+        .pad-btn.prime {
+            background: #533;
+            border-color: #744;
+        }
+        .pad-btn.prime:hover {
+            background: #744;
+        }
+        
+        @media (max-width: 768px) {
+            #controls-hint { display: none; }
+            #virtual-pad {
+                bottom: 10px; right: 10px; left: 10px;
+                justify-content: center;
+                grid-template-columns: repeat(6, 1fr);
+            }
+            .pad-btn { width: auto; aspect-ratio: 1; }
+        }
+    </style>
+    <!-- 引入 Three.js 和 OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h1>3D 魔方</h1>
+        <div class="btn-group">
+            <button id="btn-scramble">🎲 随机打乱</button>
+            <button id="btn-solve" disabled>✨ 自动还原</button>
+        </div>
+        <div id="status">状态: 就绪</div>
+    </div>
+
+    <div id="controls-hint">
+        <p style="margin: 0 0 5px 0;">🖱️ <b>鼠标控制:</b> 拖动背景旋转视角，滚轮缩放</p>
+        <p style="margin: 0;">⌨️ <b>键盘快捷键:</b> <span class="key">U</span> <span class="key">D</span> <span class="key">L</span> <span class="key">R</span> <span class="key">F</span> <span class="key">B</span> 旋转面 (按住 <span class="key">Shift</span> 逆时针)</p>
+    </div>
+
+    <div id="virtual-pad">
+        <div class="pad-btn" data-move="U">U</div>
+        <div class="pad-btn" data-move="L">L</div>
+        <div class="pad-btn" data-move="F">F</div>
+        <div class="pad-btn" data-move="R">R</div>
+        <div class="pad-btn" data-move="B">B</div>
+        <div class="pad-btn" data-move="D">D</div>
+        
+        <div class="pad-btn prime" data-move="U'">U'</div>
+        <div class="pad-btn prime" data-move="L'">L'</div>
+        <div class="pad-btn prime" data-move="F'">F'</div>
+        <div class="pad-btn prime" data-move="R'">R'</div>
+        <div class="pad-btn prime" data-move="B'">B'</div>
+        <div class="pad-btn prime" data-move="D'">D'</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        // ==========================================
+        // 初始化 Three.js 场景
+        // ==========================================
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(5, 4, 6);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enablePan = false;
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 4;
+        controls.maxDistance = 15;
+
+        // 灯光设置
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight1.position.set(10, 20, 10);
+        scene.add(dirLight1);
+        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+        dirLight2.position.set(-10, -20, -10);
+        scene.add(dirLight2);
+
+        // ==========================================
+        // 构建魔方
+        // ==========================================
+        const CUBE_SIZE = 1;
+        const SPACING = 0.05;
+        const OFFSET = CUBE_SIZE + SPACING;
+        
+        // 魔方标准配色: 右红, 左橙, 上白, 下黄, 前绿, 后蓝
+        const COLORS = [
+            0xcc0000, // Right  (+x)
+            0xff5500, // Left   (-x)
+            0xffffff, // Top    (+y)
+            0xffdd00, // Bottom (-y)
+            0x009900, // Front  (+z)
+            0x0000cc  // Back   (-z)
+        ];
+        
+        const cubes = [];
+        const cubeGroup = new THREE.Group();
+        scene.add(cubeGroup);
+
+        // 旋转轴定义和参数
+        const AXIS_MAP = {
+            'U': { axis: 'y', index: 1, dir: -1 },
+            'D': { axis: 'y', index: -1, dir: 1 },
+            'R': { axis: 'x', index: 1, dir: -1 },
+            'L': { axis: 'x', index: -1, dir: 1 },
+            'F': { axis: 'z', index: 1, dir: -1 },
+            'B': { axis: 'z', index: -1, dir: 1 }
+        };
+
+        function createRubiksCube() {
+            const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+            
+            for (let x = -1; x <= 1; x++) {
+                for (let y = -1; y <= 1; y++) {
+                    for (let z = -1; z <= 1; z++) {
+                        // 创建每个面的材质，如果不是外表面则设为黑色
+                        const materials = COLORS.map((color, index) => {
+                            let isExternal = false;
+                            if (index === 0 && x === 1) isExternal = true;
+                            if (index === 1 && x === -1) isExternal = true;
+                            if (index === 2 && y === 1) isExternal = true;
+                            if (index === 3 && y === -1) isExternal = true;
+                            if (index === 4 && z === 1) isExternal = true;
+                            if (index === 5 && z === -1) isExternal = true;
+
+                            return new THREE.MeshStandardMaterial({
+                                color: isExternal ? color : 0x111111,
+                                roughness: 0.2,
+                                metalness: 0.1
+                            });
+                        });
+
+                        const mesh = new THREE.Mesh(geometry, materials);
+                        mesh.position.set(x * OFFSET, y * OFFSET, z * OFFSET);
+                        
+                        // 添加黑色描边以区分方块
+                        const edges = new THREE.EdgesGeometry(geometry);
+                        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 }));
+                        mesh.add(line);
+
+                        cubeGroup.add(mesh);
+                        cubes.push(mesh);
+                    }
+                }
+            }
+        }
+        createRubiksCube();
+
+        // ==========================================
+        // 动画与逻辑控制
+        // ==========================================
+        let moveQueue = [];
+        let moveHistory = [];
+        let isAnimating = false;
+        let currentAnimation = null;
+
+        const pivot = new THREE.Object3D();
+        cubeGroup.add(pivot);
+
+        // UI 元素
+        const btnScramble = document.getElementById('btn-scramble');
+        const btnSolve = document.getElementById('btn-solve');
+        const statusText = document.getElementById('status');
+
+        function updateUI() {
+            if (moveQueue.length > 0 || isAnimating) {
+                btnScramble.disabled = true;
+                btnSolve.disabled = true;
+            } else {
+                btnScramble.disabled = false;
+                btnSolve.disabled = moveHistory.length === 0;
+                statusText.innerText = "状态: 就绪";
+            }
+        }
+
+        function queueMove(face, prime = false, speed = 0.1, isSolveMove = false) {
+            moveQueue.push({ face, prime, speed, isSolveMove });
+        }
+
+        // 捕捉浮点数误差，对其到整数倍的偏移量和90度角度
+        function snapToGrid(cube) {
+            cube.position.x = Math.round(cube.position.x / OFFSET) * OFFSET;
+            cube.position.y = Math.round(cube.position.y / OFFSET) * OFFSET;
+            cube.position.z = Math.round(cube.position.z / OFFSET) * OFFSET;
+
+            const euler = new THREE.Euler().setFromQuaternion(cube.quaternion);
+            const halfPi = Math.PI / 2;
+            euler.x = Math.round(euler.x / halfPi) * halfPi;
+            euler.y = Math.round(euler.y / halfPi) * halfPi;
+            euler.z = Math.round(euler.z / halfPi) * halfPi;
+            cube.quaternion.setFromEuler(euler);
+        }
+
+        function processQueue() {
+            if (isAnimating || moveQueue.length === 0) return;
+
+            isAnimating = true;
+            const move = moveQueue.shift();
+            const config = AXIS_MAP[move.face];
+            
+            let direction = config.dir;
+            if (move.prime) direction *= -1;
+
+            const targetAngle = direction * (Math.PI / 2);
+            
+            // 找出属于当前旋转层的所有方块
+            const activeCubes = cubes.filter(cube => {
+                return Math.abs(cube.position[config.axis] - config.index * OFFSET) < 0.1;
+            });
+
+            // 将这些方块附加到旋转轴(pivot)上
+            activeCubes.forEach(cube => pivot.attach(cube));
+
+            currentAnimation = {
+                move,
+                axis: config.axis,
+                targetAngle,
+                currentAngle: 0,
+                speed: move.speed * Math.sign(targetAngle),
+                activeCubes
+            };
+            
+            // 更新状态显示
+            if (move.speed > 0.2) {
+                statusText.innerText = "状态: 自动打乱中...";
+            } else if (move.isSolveMove) {
+                statusText.innerText = `状态: 自动还原中... (剩余 ${moveQueue.length} 步)`;
+            } else {
+                statusText.innerText = `状态: 旋转 ${move.face}${move.prime ? "'" : ""}`;
+            }
+            updateUI();
+        }
+
+        function animateRotation() {
+            if (!currentAnimation) return;
+
+            const anim = currentAnimation;
+            anim.currentAngle += anim.speed;
+
+            // 检查是否到达或超过目标角度
+            if (Math.abs(anim.currentAngle) >= Math.abs(anim.targetAngle)) {
+                // 修正到精确的目标角度
+                pivot.rotation[anim.axis] = anim.targetAngle;
+                pivot.updateMatrixWorld();
+
+                // 将方块重新附加到根组，并修复浮点误差
+                anim.activeCubes.forEach(cube => {
+                    cubeGroup.attach(cube);
+                    snapToGrid(cube);
+                });
+
+                // 重置枢轴
+                pivot.rotation[anim.axis] = 0;
+                pivot.updateMatrixWorld();
+
+                // 记录历史（如果是用户操作或打乱）
+                if (!anim.move.isSolveMove) {
+                    moveHistory.push(anim.move);
+                }
+
+                currentAnimation = null;
+                isAnimating = false;
+                updateUI();
+                processQueue(); // 尝试处理下一个动作
+            } else {
+                pivot.rotation[anim.axis] = anim.currentAngle;
+            }
+        }
+
+        // ==========================================
+        // 核心交互功能：打乱与还原
+        // ==========================================
+        function scramble() {
+            if (isAnimating || moveQueue.length > 0) return;
+            const faces = ['U', 'D', 'L', 'R', 'F', 'B'];
+            const scrambleLength = 25; // 随机旋转25次
+
+            for (let i = 0; i < scrambleLength; i++) {
+                const face = faces[Math.floor(Math.random() * faces.length)];
+                const prime = Math.random() > 0.5;
+                queueMove(face, prime, 0.4); // 速度较快
+            }
+            processQueue();
+        }
+
+        function solve() {
+            if (isAnimating || moveQueue.length > 0 || moveHistory.length === 0) return;
+            
+            // 复制并倒序历史记录
+            const historyCopy = [...moveHistory].reverse();
+            
+            // 生成逆向操作序列
+            historyCopy.forEach(move => {
+                queueMove(move.face, !move.prime, 0.15, true);
+            });
+            
+            // 清空历史记录
+            moveHistory = [];
+            processQueue();
+        }
+
+        // ==========================================
+        // 事件监听
+        // ==========================================
+        btnScramble.addEventListener('click', scramble);
+        btnSolve.addEventListener('click', solve);
+
+        // 键盘控制
+        window.addEventListener('keydown', (e) => {
+            if (isAnimating || moveQueue.length > 0) return;
+            const key = e.key.toUpperCase();
+            if (AXIS_MAP[key]) {
+                queueMove(key, e.shiftKey, 0.1);
+                processQueue();
+            }
+        });
+
+        // 虚拟按键面板
+        document.querySelectorAll('.pad-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isAnimating || moveQueue.length > 0) return;
+                const moveStr = btn.getAttribute('data-move');
+                const face = moveStr[0];
+                const prime = moveStr.length > 1;
+                queueMove(face, prime, 0.1);
+                processQueue();
+            });
+        });
+
+        // 窗口大小适配
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ==========================================
+        // 渲染循环
+        // ==========================================
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            animateRotation();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
