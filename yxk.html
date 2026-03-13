@@ -1,231 +1,243 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Gamepad2, Play, X, Compass, Zap, Puzzle, Coffee } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的专属游戏库</title>
+  <!-- 引入 Tailwind CSS 让页面变得好看 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
 
-// 🌟 这里是你的“游戏数据库”！
-// 你只需要把你做好的游戏信息填到这里面就可以了
-const mockGames = [
-  { 
-    id: 1, 
-    title: '贪吃蛇大作战', 
-    category: '休闲', 
-    desc: '经典的贪吃蛇游戏，吃苹果变长，挑战最高分！', 
-    icon: '🐍', 
-    color: 'bg-green-100 text-green-600',
-    url: '' // 💡 把你的游戏网页链接或本地 HTML 路径填在这里！比如 './snake.html'
-  },
-  { 
-    id: 2, 
-    title: '疯狂2048', 
-    category: '益智', 
-    desc: '滑动合并数字，直到拼出终极的2048！', 
-    icon: '🔢', 
-    color: 'bg-yellow-100 text-yellow-600',
-    url: '' 
-  },
-  { 
-    id: 3, 
-    title: '星际护卫队', 
-    category: '动作', 
-    desc: '驾驶你的专属飞船，消灭不断涌来的外星入侵者。', 
-    icon: '🚀', 
-    color: 'bg-indigo-100 text-indigo-600',
-    url: '' 
-  },
-  { 
-    id: 4, 
-    title: '记忆大师', 
-    category: '益智', 
-    desc: '翻牌匹配相同的图案，考验你大脑的时候到了。', 
-    icon: '🧠', 
-    color: 'bg-purple-100 text-purple-600',
-    url: '' 
-  },
-  { 
-    id: 5, 
-    title: '无敌井字棋', 
-    category: '休闲', 
-    desc: '和不可战胜的AI来一局轻松（又折磨）的井字棋。', 
-    icon: '⭕', 
-    color: 'bg-red-100 text-red-600',
-    url: '' 
-  },
-  { 
-    id: 6, 
-    title: '像素小鸟', 
-    category: '动作', 
-    desc: '点击屏幕让小鸟飞翔，千万别撞到水管！', 
-    icon: '🐦', 
-    color: 'bg-blue-100 text-blue-600',
-    url: '' 
-  }
-];
-
-const categories = [
-  { name: '全部', icon: Compass },
-  { name: '休闲', icon: Coffee },
-  { name: '益智', icon: Puzzle },
-  { name: '动作', icon: Zap },
-];
-
-export default function App() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('全部');
-  const [playingGame, setPlayingGame] = useState(null);
-
-  // 过滤游戏列表
-  const filteredGames = useMemo(() => {
-    return mockGames.filter((game) => {
-      const matchCategory = selectedCategory === '全部' || game.category === selectedCategory;
-      const matchSearch = game.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          game.desc.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCategory && matchSearch;
-    });
-  }, [searchQuery, selectedCategory]);
-
-  // 🎮 如果正在玩游戏，显示游戏界面
-  if (playingGame) {
-    return (
-      <div className="fixed inset-0 bg-slate-900 z-50 flex flex-col">
-        {/* 顶部导航栏 */}
-        <div className="bg-slate-800 text-white p-4 flex justify-between items-center shadow-lg">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{playingGame.icon}</span>
-            <div>
-              <h2 className="font-bold text-lg leading-tight">{playingGame.title}</h2>
-              <span className="text-xs text-slate-400 bg-slate-700 px-2 py-0.5 rounded-full">
-                {playingGame.category}
-              </span>
-            </div>
-          </div>
-          <button 
-            onClick={() => setPlayingGame(null)}
-            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-          >
-            <X size={20} />
-            退出游戏
-          </button>
-        </div>
-
-        {/* 游戏内容区 (使用 iframe 嵌入你的游戏) */}
-        <div className="flex-1 bg-black flex items-center justify-center relative">
-          {playingGame.url ? (
-            <iframe 
-              src={playingGame.url} 
-              className="w-full h-full border-none"
-              title={playingGame.title}
-            />
-          ) : (
-            <div className="text-center text-slate-400 max-w-md p-8 bg-slate-800 rounded-2xl shadow-2xl">
-              <Gamepad2 size={64} className="mx-auto mb-6 text-slate-500 opacity-50" />
-              <h3 className="text-2xl font-bold text-white mb-3">游戏暂未接入链接哦！</h3>
-              <p className="mb-6 text-slate-300">
-                你可以在代码的 <code className="bg-slate-700 px-2 py-1 rounded text-pink-400">mockGames</code> 数组中，
-                找到 <strong>{playingGame.title}</strong>，然后把它的 <code className="bg-slate-700 px-2 py-1 rounded text-pink-400">url</code> 属性替换成你真实游戏的网页地址或者 HTML 文件路径。
-              </p>
-              <button 
-                onClick={() => setPlayingGame(null)}
-                className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                我知道了，这就去改！
-              </button>
-            </div>
-          )}
-        </div>
+  <!-- 游戏库主界面 -->
+  <div id="main-view" class="max-w-6xl mx-auto p-6 md:p-10">
+    
+    <!-- 头部区域 -->
+    <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div>
+        <h1 class="text-4xl font-extrabold text-slate-900 flex items-center gap-3 mb-2">
+          🎮 我的百宝箱游戏库
+        </h1>
+        <p class="text-slate-500 text-lg">欢迎回来！今天想重温哪个自己写的大作？</p>
       </div>
-    );
-  }
+      
+      <!-- 搜索框 -->
+      <div class="relative w-full md:w-72">
+        <input 
+          type="text" 
+          id="search-input"
+          placeholder="🔍 搜索游戏名字..." 
+          class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-sm bg-white"
+        >
+      </div>
+    </header>
 
-  // 🏠 否则，显示游戏库主页
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 p-6 md:p-10 font-sans">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* 头部欢迎区 */}
-        <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-4xl font-extrabold text-slate-900 flex items-center gap-3 mb-2">
-              <Gamepad2 className="text-indigo-600" size={40} />
-              我的 Gemini 游戏库
-            </h1>
-            <p className="text-slate-500 text-lg">欢迎回来！今天想挑战哪个小游戏呢？</p>
-          </div>
-          
-          {/* 搜索框 */}
-          <div className="relative w-full md:w-72">
-            <input 
-              type="text" 
-              placeholder="搜索游戏名字或玩法..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-sm bg-white"
-            />
-            <Search className="absolute left-4 top-3.5 text-slate-400" size={20} />
-          </div>
-        </header>
+    <!-- 分类按钮区 -->
+    <div id="categories-container" class="flex gap-3 mb-8 overflow-x-auto pb-2">
+      <!-- 按钮会用 JS 自动生成在这里 -->
+    </div>
 
-        {/* 分类标签 */}
-        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-          {categories.map((cat) => {
-            const Icon = cat.icon;
-            const isActive = selectedCategory === cat.name;
-            return (
-              <button
-                key={cat.name}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap ${
-                  isActive 
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
-                    : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'
-                }`}
-              >
-                <Icon size={18} className={isActive ? 'text-indigo-200' : 'text-slate-400'} />
-                {cat.name}
-              </button>
-            );
-          })}
-        </div>
+    <!-- 游戏卡片网格 -->
+    <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- 卡片会用 JS 自动生成在这里 -->
+    </div>
+  </div>
 
-        {/* 游戏网格展示 */}
-        {filteredGames.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredGames.map((game) => (
-              <div 
-                key={game.id} 
-                className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-sm ${game.color}`}>
-                    {game.icon}
-                  </div>
-                  <span className="text-xs font-semibold px-3 py-1 bg-slate-100 text-slate-500 rounded-full">
-                    {game.category}
-                  </span>
-                </div>
-                
-                <h3 className="text-xl font-bold text-slate-800 mb-2">{game.title}</h3>
-                <p className="text-slate-500 text-sm mb-6 flex-1 line-clamp-2">
-                  {game.desc}
-                </p>
-                
-                <button 
-                  onClick={() => setPlayingGame(game)}
-                  className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-indigo-600 text-white py-3 rounded-xl font-medium transition-colors group-hover:shadow-md"
-                >
-                  <Play size={18} className="fill-current" />
-                  开始游玩
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🕵️‍♂️</div>
-            <h3 className="text-xl font-bold text-slate-700 mb-2">没有找到相关游戏哦</h3>
-            <p className="text-slate-500">换个关键词或者分类试试看吧！</p>
-          </div>
-        )}
+  <!-- 游戏全屏弹窗 (默认隐藏) -->
+  <div id="game-modal" class="fixed inset-0 bg-slate-900 z-50 hidden flex-col">
+    <!-- 弹窗顶部导航 -->
+    <div class="bg-slate-800 text-white p-4 flex justify-between items-center shadow-lg">
+      <div class="flex items-center gap-3">
+        <span id="modal-icon" class="text-3xl">🎮</span>
+        <h2 id="modal-title" class="font-bold text-lg">游戏加载中...</h2>
+      </div>
+      <button 
+        onclick="closeGame()"
+        class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg transition-colors font-bold flex items-center gap-2"
+      >
+        ❌ 退出游戏
+      </button>
+    </div>
 
+    <!-- 游戏画面区 -->
+    <div class="flex-1 bg-black relative flex items-center justify-center">
+      <!-- 真正用来装游戏的 iframe -->
+      <iframe id="game-iframe" class="w-full h-full border-none hidden"></iframe>
+      
+      <!-- 如果没填链接，就显示这个提示 -->
+      <div id="empty-url-msg" class="text-center bg-slate-800 p-8 rounded-2xl max-w-md hidden">
+        <div class="text-6xl mb-4">🚧</div>
+        <h3 class="text-2xl font-bold text-white mb-3">游戏链接还没填哦！</h3>
+        <p class="text-slate-300 mb-6 text-left">
+          你需要用记事本打开 <code class="bg-slate-700 px-2 py-1 rounded text-pink-400">index.html</code> 代码，找到这个游戏，把它的 <code class="bg-slate-700 px-2 py-1 rounded text-pink-400">url</code> 属性改成你游戏文件的名字。<br><br>
+          举个例子：<br>
+          <code class="bg-slate-700 px-2 py-1 rounded text-green-400">url: './snake.html'</code>
+        </p>
+        <button onclick="closeGame()" class="bg-indigo-500 text-white px-6 py-2 rounded-lg">好的，我去改</button>
       </div>
     </div>
-  );
-}
+  </div>
+
+  <!-- 👇 核心逻辑：你的游戏数据都在这里！ -->
+  <script>
+    // 🌟 在这里填入你的小游戏信息！
+    const myGames = [
+      { 
+        id: 1, 
+        title: '贪吃蛇', 
+        category: '休闲', 
+        desc: '经典的贪吃蛇，吃了苹果会变长哦！', 
+        icon: '🐍', 
+        url: '' // 👈 把你的游戏文件路径填在这！例如 './tanchishe.html'
+      },
+      { 
+        id: 2, 
+        title: '疯狂2048', 
+        category: '益智', 
+        desc: '滑动合并数字，挑战你的大脑极限。', 
+        icon: '🔢', 
+        url: '' 
+      },
+      { 
+        id: 3, 
+        title: '打砖块', 
+        category: '动作', 
+        desc: '接住小球，把上面的砖块全部消灭干净！', 
+        icon: '🧱', 
+        url: 'https://example.com' // 这是一个测试链接，你可以点开看看效果
+      },
+      { 
+        id: 4, 
+        title: '井字棋', 
+        category: '休闲', 
+        desc: '和电脑来一局简单的井字棋对战吧。', 
+        icon: '⭕', 
+        url: '' 
+      }
+    ];
+
+    const categories = ['全部', '休闲', '益智', '动作'];
+    let currentCategory = '全部';
+    let searchQuery = '';
+
+    // 获取页面上的元素
+    const gamesGrid = document.getElementById('games-grid');
+    const categoriesContainer = document.getElementById('categories-container');
+    const searchInput = document.getElementById('search-input');
+    
+    const gameModal = document.getElementById('game-modal');
+    const gameIframe = document.getElementById('game-iframe');
+    const emptyUrlMsg = document.getElementById('empty-url-msg');
+    const modalTitle = document.getElementById('modal-title');
+    const modalIcon = document.getElementById('modal-icon');
+
+    // 1️⃣ 渲染分类按钮
+    function renderCategories() {
+      categoriesContainer.innerHTML = '';
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.innerText = cat;
+        // 判断是不是当前选中的分类，给不同的颜色
+        if (cat === currentCategory) {
+          btn.className = 'px-5 py-2.5 rounded-xl font-bold bg-indigo-600 text-white shadow-md whitespace-nowrap';
+        } else {
+          btn.className = 'px-5 py-2.5 rounded-xl font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap transition-colors';
+        }
+        // 点击分类时触发刷新
+        btn.onclick = () => {
+          currentCategory = cat;
+          renderCategories();
+          renderGames();
+        };
+        categoriesContainer.appendChild(btn);
+      });
+    }
+
+    // 2️⃣ 渲染游戏卡片
+    function renderGames() {
+      gamesGrid.innerHTML = '';
+      
+      // 过滤游戏（根据分类和搜索词）
+      const filteredGames = myGames.filter(game => {
+        const matchCategory = currentCategory === '全部' || game.category === currentCategory;
+        const matchSearch = game.title.includes(searchQuery) || game.desc.includes(searchQuery);
+        return matchCategory && matchSearch;
+      });
+
+      if (filteredGames.length === 0) {
+        gamesGrid.innerHTML = `
+          <div class="col-span-full text-center py-20 text-slate-500">
+            <div class="text-5xl mb-3">🕵️‍♂️</div>
+            <p>没有找到匹配的游戏哦...</p>
+          </div>
+        `;
+        return;
+      }
+
+      filteredGames.forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer';
+        card.onclick = () => openGame(game); // 点击卡片打开游戏
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-indigo-50 shadow-inner">
+              ${game.icon}
+            </div>
+            <span class="text-xs font-bold px-3 py-1 bg-slate-100 text-slate-500 rounded-full">
+              ${game.category}
+            </span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-800 mb-2">${game.title}</h3>
+          <p class="text-slate-500 text-sm mb-6 flex-1 line-clamp-2">${game.desc}</p>
+          <button class="w-full bg-slate-900 hover:bg-indigo-600 text-white py-3 rounded-xl font-medium transition-colors">
+            ▶ 开始游玩
+          </button>
+        `;
+        gamesGrid.appendChild(card);
+      });
+    }
+
+    // 3️⃣ 打开游戏逻辑
+    function openGame(game) {
+      modalTitle.innerText = game.title;
+      modalIcon.innerText = game.icon;
+      gameModal.classList.remove('hidden');
+      gameModal.classList.add('flex');
+      
+      document.body.style.overflow = 'hidden'; // 背景禁止滚动
+
+      if (game.url) {
+        // 如果有链接，显示 iframe
+        gameIframe.src = game.url;
+        gameIframe.classList.remove('hidden');
+        emptyUrlMsg.classList.add('hidden');
+      } else {
+        // 如果没链接，显示提示文字
+        gameIframe.src = '';
+        gameIframe.classList.add('hidden');
+        emptyUrlMsg.classList.remove('hidden');
+      }
+    }
+
+    // 4️⃣ 关闭游戏逻辑
+    function closeGame() {
+      gameModal.classList.add('hidden');
+      gameModal.classList.remove('flex');
+      gameIframe.src = ''; // 清空 iframe，让游戏停止运行
+      document.body.style.overflow = 'auto'; // 恢复滚动
+    }
+
+    // 5️⃣ 监听搜索框输入
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderGames();
+    });
+
+    // 页面加载完成后，初始化渲染
+    renderCategories();
+    renderGames();
+
+  </script>
+</body>
+</html>
