@@ -10,35 +10,40 @@
 <body class="bg-slate-50 min-h-screen font-sans text-slate-800">
 
   <!-- 游戏库主界面 -->
-  <div id="main-view" class="max-w-6xl mx-auto p-6 md:p-10">
+  <div id="main-view" class="max-w-6xl mx-auto p-4 md:p-8">
     
     <!-- 头部区域 -->
-    <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <header class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
-        <h1 class="text-4xl font-extrabold text-slate-900 flex items-center gap-3 mb-2">
-          🎮 我的百宝箱游戏库
-        </h1>
-        <p class="text-slate-500 text-lg">欢迎回来！今天想重温哪个自己写的大作？</p>
+        <div class="flex items-center gap-3 mb-1">
+          <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
+            🎮 我的游戏库
+          </h1>
+          <a href="https://chanhua05.github.io/ipppp" target="_blank" class="flex items-center gap-1 bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded-lg text-xs font-bold transition-colors shadow-sm">
+            📡 检测IP
+          </a>
+        </div>
+        <p class="text-slate-500 text-sm">欢迎回来！今天想重温哪个自己写的大作？</p>
       </div>
       
       <!-- 搜索框 -->
-      <div class="relative w-full md:w-72">
+      <div class="relative w-full md:w-64">
         <input 
           type="text" 
           id="search-input"
           placeholder="🔍 搜索游戏名字..." 
-          class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-sm bg-white"
+          class="w-full px-4 py-2 text-sm rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-sm bg-white"
         >
       </div>
     </header>
 
     <!-- 分类按钮区 -->
-    <div id="categories-container" class="flex gap-3 mb-8 overflow-x-auto pb-2">
+    <div id="categories-container" class="flex gap-2 mb-6 overflow-x-auto pb-2">
       <!-- 按钮会用 JS 自动生成在这里 -->
     </div>
 
     <!-- 游戏卡片网格 -->
-    <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div id="games-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
       <!-- 卡片会用 JS 自动生成在这里 -->
     </div>
   </div>
@@ -84,39 +89,56 @@
     const myGames = [
       { 
         id: 1, 
-        title: '贪吃蛇', 
-        category: '休闲', 
-        desc: '经典的贪吃蛇，吃了苹果会变长哦！', 
-        icon: '🐍', 
-        url: '' // 👈 把你的游戏文件路径填在这！例如 './tanchishe.html'
+        title: '爽爽割草', 
+        category: '动作', 
+        desc: '超解压的满屏割草游戏，疯狂收割敌人，爽感直接拉满！', 
+        icon: '⚔️', 
+        url: 'https://chanhua05.github.io/game/gecao.html' 
       },
       { 
         id: 2, 
-        title: '疯狂2048', 
-        category: '益智', 
-        desc: '滑动合并数字，挑战你的大脑极限。', 
-        icon: '🔢', 
-        url: '' 
+        title: '雷霆战机', 
+        category: '射击', 
+        desc: '驾驶你的王牌战机，穿梭在枪林弹雨中，保卫宇宙和平！', 
+        icon: '✈️', 
+        url: 'https://chanhua05.github.io/game/ltzj.html'
       },
       { 
         id: 3, 
-        title: '打砖块', 
-        category: '动作', 
-        desc: '接住小球，把上面的砖块全部消灭干净！', 
-        icon: '🧱', 
-        url: 'https://example.com' // 这是一个测试链接，你可以点开看看效果
+        title: '斗地主', 
+        category: '棋牌', // 👈 换成棋牌分类啦
+        desc: '经典三人斗地主！叫地主、抢地主、甩出王炸，看谁才是真正的牌神！', 
+        icon: '🃏', 
+        url: 'https://chanhua05.github.io/game/doudizhu' // 👈 斗地主的链接也安排上了！
       },
       { 
         id: 4, 
-        title: '井字棋', 
-        category: '休闲', 
-        desc: '和电脑来一局简单的井字棋对战吧。', 
-        icon: '⭕', 
-        url: '' 
+        title: '三国杀', 
+        category: '策略', 
+        desc: '经典策略卡牌对战！主公、忠臣、反贼、内奸，尔虞我诈，谁能笑到最后？', 
+        icon: '🐉', 
+        url: 'https://chanhua05.github.io/game/newrealchinakill.html' 
+      },
+      { 
+        id: 5, 
+        title: '魔方', 
+        category: '益智', 
+        desc: '3D经典魔方！转动指尖，挑战你的空间思维和手速，看看你能多快还原！', 
+        icon: '🧩', 
+        url: 'https://chanhua05.github.io/game/mofang' 
+      },
+      { 
+        id: 6, 
+        title: '狼人杀', 
+        category: '推理', 
+        desc: '天黑请闭眼... 伪装、逻辑与口才的较量，找出隐藏的狼人或者消灭所有好人！', 
+        icon: '🐺', 
+        url: 'https://chanhua05.github.io/ipppp/wolf' 
       }
     ];
 
-    const categories = ['全部', '休闲', '益智', '动作'];
+    // 我在这里帮你加了一个“推理”分类哦！
+    const categories = ['全部', '动作', '射击', '棋牌', '策略', '推理', '休闲', '益智'];
     let currentCategory = '全部';
     let searchQuery = '';
 
@@ -139,9 +161,9 @@
         btn.innerText = cat;
         // 判断是不是当前选中的分类，给不同的颜色
         if (cat === currentCategory) {
-          btn.className = 'px-5 py-2.5 rounded-xl font-bold bg-indigo-600 text-white shadow-md whitespace-nowrap';
+          btn.className = 'px-4 py-1.5 rounded-lg text-sm font-bold bg-indigo-600 text-white shadow-md whitespace-nowrap';
         } else {
-          btn.className = 'px-5 py-2.5 rounded-xl font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap transition-colors';
+          btn.className = 'px-4 py-1.5 rounded-lg text-sm font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap transition-colors';
         }
         // 点击分类时触发刷新
         btn.onclick = () => {
@@ -166,9 +188,9 @@
 
       if (filteredGames.length === 0) {
         gamesGrid.innerHTML = `
-          <div class="col-span-full text-center py-20 text-slate-500">
-            <div class="text-5xl mb-3">🕵️‍♂️</div>
-            <p>没有找到匹配的游戏哦...</p>
+          <div class="col-span-full text-center py-16 text-slate-500">
+            <div class="text-4xl mb-3">🕵️‍♂️</div>
+            <p class="text-sm">没有找到匹配的游戏哦...</p>
           </div>
         `;
         return;
@@ -176,21 +198,21 @@
 
       filteredGames.forEach(game => {
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer';
+        card.className = 'bg-white rounded-xl p-4 md:p-5 shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer';
         card.onclick = () => openGame(game); // 点击卡片打开游戏
 
         card.innerHTML = `
-          <div class="flex items-start justify-between mb-4">
-            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-indigo-50 shadow-inner">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-3xl bg-indigo-50 shadow-inner">
               ${game.icon}
             </div>
-            <span class="text-xs font-bold px-3 py-1 bg-slate-100 text-slate-500 rounded-full">
+            <span class="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md">
               ${game.category}
             </span>
           </div>
-          <h3 class="text-xl font-bold text-slate-800 mb-2">${game.title}</h3>
-          <p class="text-slate-500 text-sm mb-6 flex-1 line-clamp-2">${game.desc}</p>
-          <button class="w-full bg-slate-900 hover:bg-indigo-600 text-white py-3 rounded-xl font-medium transition-colors">
+          <h3 class="text-base font-bold text-slate-800 mb-1.5">${game.title}</h3>
+          <p class="text-slate-500 text-xs mb-4 flex-1 line-clamp-2 leading-relaxed">${game.desc}</p>
+          <button class="w-full bg-slate-800 hover:bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium transition-colors">
             ▶ 开始游玩
           </button>
         `;
