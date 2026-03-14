@@ -1,0 +1,429 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+
+// === 配置区 ===
+const TILE_SIZE = 48; // 卡牌尺寸 (px)
+const MAX_SLOT = 7; // 槽位最大容量
+const ICONS = ['🥕', '✂️', '🥛', '🧶', '🌽', '🔔', '🔥', '🌳', '🍎', '🍉', '🍇', '🍓', '🍔', '🍟', '🍕'];
+
+// 槽位在容器中的固定 Y 坐标
+const SLOT_START_X = 14;
+const SLOT_Y = 470;
+
+// 检查两个卡牌是否重叠 (仅在生成地图时使用)
+const isOverlapping = (t1, t2) => {
+  return (
+    Math.abs(t1.x - t2.x) < TILE_SIZE * 0.95 &&
+    Math.abs(t1.y - t2.y) < TILE_SIZE * 0.95
+  );
+};
+
+// 打乱数组
+const shuffleArray = (array) => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
+// === 独立的卡牌组件，负责接收坐标并渲染动效 ===
+const Tile = React.memo(({ tile, displayX, displayY, isCovered, zIndex, onClick }) => {
+  return (
+    <div
+      onClick={() => onClick(tile)}
+      className={`absolute left-0 top-0 flex items-center justify-center rounded-lg shadow-md border-b-4 text-3xl transition-all duration-300 ease-in-out
+        ${tile.status === 'cleared' ? 'opacity-0 scale-0 pointer-events-none' : 'opacity-100 scale-100'}
+        ${isCovered ? 'bg-gray-300 border-gray-400 brightness-75 cursor-not-allowed' : 'bg-white border-gray-300 cursor-pointer hover:brightness-110 active:scale-90'}
+      `}
+      style={{
+        width: TILE_SIZE,
+        height: TILE_SIZE,
+        transform: `translate(${displayX}px, ${displayY}px)`,
+        zIndex: zIndex,
+        // 如果被遮挡，阻止点击事件触发
+        pointerEvents: isCovered || tile.status !== 'board' ? 'none' : 'auto'
+      }}
+    >
+      {tile.type}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent rounded-lg pointer-events-none"></div>
+    </div>
+  );
+});
+
+export default function YangLeGeYang() {
+  const [gameState, setGameState] = useState('menu'); // menu, playing, won, lost
+  const [level, setLevel] = useState(1);
+  const [tiles, setTiles] = useState([]);
+  const [slot, setSlot] = useState([]);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // 性能优化核心：用 ref 保存最新状态，避免闭包问题
+  const stateRef = useRef({ gameState, slot, tiles });
+
+  // === 关卡生成逻辑（包含 O(1) 预计算优化） ===
+  const generateLevel = useCallback((lvl) => {
+    let newTiles = [];
+    let idCounter = 0;
+    let requiredIcons = [];
+
+    // --- 1. 生成卡牌坐标和类型 ---
+    if (lvl === 1) {
+      const types = ICONS.slice(0, 3);
+      for (let i = 0; i < 3; i++) requiredIcons.push(...types, ...types, ...types);
+      requiredIcons = shuffleArray(requiredIcons).slice(0, 12);
+      while(requiredIcons.length % 3 !== 0) requiredIcons.pop();
+
+      let iconIndex = 0;
+      for (let z = 0; z < 2; z++) {
+        for (let x = 0; x < 2 - z; x++) {
+          for (let y = 0; y < 2 - z; y++) {
+            if (iconIndex < requiredIcons.length) {
+              newTiles.push({
+                id: idCounter++, type: requiredIcons[iconIndex++],
+                x: 120 + x * TILE_SIZE + (z * TILE_SIZE) / 2,
+                y: 100 + y * TILE_SIZE + (z * TILE_SIZE) / 2,
+                z: z, status: 'board', coveredBy: [], covers: []
+              });
+            }
+          }
+        }
+      }
+    } else {
+      const numTypes = 12; 
+      const setsPerType = 12; 
+      let pool = [];
+      for (let i = 0; i < numTypes; i++) {
+        for (let j = 0; j < setsPerType * 3; j++) pool.push(ICONS[i]);
+      }
+      pool = shuffleArray(pool);
+
+      let iconIndex = 0;
+      const coreLayers = 16; 
+      for (let z = 0; z < coreLayers; z++) {
+        const gridSize = z % 2 === 0 ? 6 : 5;
+        const offset = z % 2 === 0 ? 0 : TILE_SIZE / 2;
+        for (let x = 0; x < gridSize; x++) {
+          for (let y = 0; y < gridSize; y++) {
+            if (iconIndex < pool.length * 0.7) { 
+              newTiles.push({
+                id: idCounter++, type: pool[iconIndex++],
+                x: 35 + x * TILE_SIZE + offset,
+                y: 40 + y * TILE_SIZE + offset,
+                z: z, status: 'board', coveredBy: [], covers: []
+              });
+            }
+          }
+        }
+      }
+
+      const corners = [
+        { cx: 15, cy: 10 }, { cx: 285, cy: 10 },
+        { cx: 15, cy: 300 }, { cx: 285, cy: 300 }
+      ];
+      corners.forEach((corner) => {
+        for(let z=0; z<15; z++) {
+             if (iconIndex < pool.length) {
+                newTiles.push({
+                    id: idCounter++, type: pool[iconIndex++],
+                    x: corner.cx, y: corner.cy, z: z, 
+                    status: 'board', coveredBy: [], covers: []
+                });
+             }
+        }
+      });
+
+       while (iconIndex < pool.length) {
+            newTiles.push({
+                id: idCounter++, type: pool[iconIndex++],
+                x: 45 + Math.random() * 200, y: 300 + Math.random() * 50, z: 0,
+                status: 'board', coveredBy: [], covers: []
+            });
+       }
+    }
+
+    // --- 2. 核心性能优化：预先计算谁压着谁 ---
+    for (let i = 0; i < newTiles.length; i++) {
+      for (let j = 0; j < newTiles.length; j++) {
+        if (i === j) continue;
+        const t1 = newTiles[i];
+        const t2 = newTiles[j];
+        if (t2.z > t1.z && isOverlapping(t1, t2)) {
+          t1.coveredBy.push(t2.id); // 记录谁压着我
+          t2.covers.push(t1.id);    // 记录我压着谁
+        }
+      }
+    }
+
+    setTiles(newTiles);
+    setSlot([]);
+    setGameState('playing');
+    setShowSettings(false);
+  }, []);
+
+  // 每次渲染后更新 ref 
+  useEffect(() => {
+    stateRef.current = { gameState, slot, tiles };
+  });
+
+  // === 点击卡牌逻辑（带消除动画支持） ===
+  const handleTileClick = useCallback((tile) => {
+    const { gameState, slot, tiles } = stateRef.current;
+    
+    if (gameState !== 'playing') return;
+    if (tile.coveredBy.length > 0) return; // 有人压着我，不能点
+    if (slot.length >= MAX_SLOT) return; // 满了不能点
+
+    // 1. 移动到槽位并重新排序
+    let newSlot = [...slot, tile];
+    newSlot.sort((a, b) => a.type.localeCompare(b.type));
+
+    // 2. O(1) 极速更新遮挡关系：把我从“我压着的人”的记录本里划掉
+    let newTiles = tiles.map(t => {
+      if (t.id === tile.id) return { ...t, status: 'slot' };
+      if (tile.covers.includes(t.id)) {
+        return { ...t, coveredBy: t.coveredBy.filter(id => id !== tile.id) };
+      }
+      return t;
+    });
+
+    // 3. 检查消除
+    let typeCounts = {};
+    newSlot.forEach(t => { typeCounts[t.type] = (typeCounts[t.type] || 0) + 1; });
+
+    for (const [type, count] of Object.entries(typeCounts)) {
+      if (count === 3) {
+        // 找出要被消除的 3 个 ID
+        const clearedIds = newSlot.filter(t => t.type === type).map(t => t.id);
+        // 从槽位中踢出
+        newSlot = newSlot.filter(t => t.type !== type);
+        // 更新总池子状态为 cleared（触发缩小消失动画）
+        newTiles = newTiles.map(t => clearedIds.includes(t.id) ? { ...t, status: 'cleared' } : t);
+        break; // 每次连击只消除一组
+      }
+    }
+
+    setSlot(newSlot);
+    setTiles(newTiles);
+
+    // 4. 判断胜负
+    if (newTiles.filter(t => t.status === 'board').length === 0) {
+      setTimeout(() => setGameState('won'), 500); // 留点时间看动画
+    } else if (newSlot.length >= MAX_SLOT) {
+      setTimeout(() => setGameState('lost'), 500);
+    }
+  }, []);
+
+  // === 道具：无限撤销 ===
+  const handleUndo = () => {
+    if (slot.length === 0 || gameState !== 'playing') return;
+    
+    const lastTile = slot[slot.length - 1]; // 取出最后一个放进来的
+    const newSlot = slot.slice(0, slot.length - 1);
+    
+    // 放回原位，并把遮挡关系恢复！
+    const newTiles = tiles.map(t => {
+      if (t.id === lastTile.id) return { ...t, status: 'board' };
+      if (lastTile.covers.includes(t.id)) {
+        return { ...t, coveredBy: [...t.coveredBy, lastTile.id] };
+      }
+      return t;
+    });
+    
+    setSlot(newSlot);
+    setTiles(newTiles);
+  };
+
+  // === 道具：无限洗牌 ===
+  const handleShuffle = () => {
+    if (gameState !== 'playing') return;
+    
+    const boardTiles = tiles.filter(t => t.status === 'board');
+    const types = boardTiles.map(t => t.type);
+    const shuffledTypes = shuffleArray(types);
+    
+    let typeIndex = 0;
+    const newTiles = tiles.map(t => {
+      // 洗牌只换图案，坐标和遮挡关系一毛一样！
+      if (t.status === 'board') {
+        return { ...t, type: shuffledTypes[typeIndex++] };
+      }
+      return t;
+    });
+    
+    setTiles(newTiles);
+  };
+
+  // === 渲染界面 ===
+  return (
+    <div className="min-h-screen bg-green-200 flex flex-col items-center justify-center font-sans select-none overflow-hidden touch-none">
+      
+      {/* 顶部标题栏 */}
+      <div className="absolute top-4 w-full flex justify-between items-center px-6 z-50">
+         <h1 className="text-2xl font-black text-green-800 tracking-wider bg-white/50 px-4 py-2 rounded-full border-2 border-green-600 shadow-sm">
+           🐏 羊了个羊
+         </h1>
+         <div className="flex gap-2">
+           <div className="text-lg font-bold text-gray-700 bg-white/70 px-4 py-2 rounded-xl flex items-center justify-center">
+              第 {level} 关
+           </div>
+           {/* 设置按钮 */}
+           {(gameState === 'playing' || gameState === 'won' || gameState === 'lost') && (
+             <button 
+                onClick={() => setShowSettings(true)}
+                className="bg-white/70 hover:bg-white text-xl p-2 rounded-xl border-2 border-gray-400 shadow-sm transition-transform active:scale-90"
+             >
+                ⚙️
+             </button>
+           )}
+         </div>
+      </div>
+
+      {/* 主菜单 */}
+      {gameState === 'menu' && (
+        <div className="bg-white p-8 rounded-3xl shadow-xl flex flex-col items-center border-4 border-green-400 relative z-10">
+          <div className="text-6xl mb-4 animate-bounce">🐑</div>
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">准备好受虐了吗？</h2>
+          <button 
+            onClick={() => { setLevel(1); generateLevel(1); }}
+            className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl mb-4 transition-transform active:scale-95 shadow-md border-b-4 border-green-700"
+          >
+            开始第一关 (热身)
+          </button>
+          <button 
+            onClick={() => { setLevel(2); generateLevel(2); }}
+            className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-md border-b-4 border-red-700"
+          >
+            挑战第二关 (地狱)
+          </button>
+        </div>
+      )}
+
+      {/* 游戏区主容器 */}
+      {(gameState === 'playing' || gameState === 'won' || gameState === 'lost') && (
+        <div className="relative w-[360px] h-[550px] mt-12 bg-green-200/50 rounded-3xl overflow-visible">
+          
+          {/* 渲染所有卡牌 (基于绝对定位实现飞行动画) */}
+          {tiles.map((tile) => {
+            let displayX = tile.x;
+            let displayY = tile.y;
+            let zIndex = tile.z;
+
+            // 如果在槽位中，动态计算在槽位里的目标坐标
+            if (tile.status === 'slot') {
+              const indexInSlot = slot.findIndex(t => t.id === tile.id);
+              displayX = SLOT_START_X + indexInSlot * 48; // 每个牌占 48 像素
+              displayY = SLOT_Y;
+              zIndex = 100; // 保证在最上层飞行
+            } 
+            // 如果是被消除的状态，让它停留在槽位最后的位置并缩小
+            else if (tile.status === 'cleared') {
+              displayY = SLOT_Y; 
+              zIndex = 90;
+            }
+
+            return (
+              <Tile
+                key={tile.id}
+                tile={tile}
+                displayX={displayX}
+                displayY={displayY}
+                isCovered={tile.coveredBy.length > 0}
+                zIndex={zIndex}
+                onClick={handleTileClick}
+              />
+            );
+          })}
+
+          {/* 底部道具栏 */}
+          <div className="absolute top-[390px] w-full flex justify-center gap-8 z-10">
+            <button 
+              onClick={handleUndo} 
+              className="p-3 rounded-full text-2xl shadow-md border-b-4 flex items-center justify-center w-14 h-14 bg-blue-100 border-blue-300 hover:bg-blue-200 active:scale-90 transition-transform"
+            >
+              ⏪
+            </button>
+            <button 
+              onClick={handleShuffle} 
+              className="p-3 rounded-full text-2xl shadow-md border-b-4 flex items-center justify-center w-14 h-14 bg-yellow-100 border-yellow-300 hover:bg-yellow-200 active:scale-90 transition-transform"
+            >
+              🔀
+            </button>
+          </div>
+
+          {/* 底部槽位底框 (仅做视觉底纹，实际卡牌靠绝对定位盖在上面) */}
+          <div 
+            className="absolute left-2 w-[344px] h-[64px] bg-[#8B5A2B] rounded-xl border-4 border-[#5C3A21] flex items-center px-1 gap-0.5 shadow-inner"
+            style={{ top: SLOT_Y - 8 }} // 微调一下边框位置包裹住卡牌
+          >
+            {[...Array(MAX_SLOT)].map((_, i) => (
+              <div key={i} className="flex-1 h-[48px] bg-[#6F4824] rounded-md border border-[#4A3018] opacity-50"></div>
+            ))}
+          </div>
+
+        </div>
+      )}
+
+      {/* 设置面板弹窗 */}
+      {showSettings && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-gray-300 transform transition-all scale-100">
+             <h2 className="text-3xl font-black mb-8 text-gray-800">游戏暂停 ⏸️</h2>
+             <div className="flex flex-col gap-4">
+               <button 
+                  onClick={() => setShowSettings(false)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md border-b-4 border-blue-700 active:scale-95 transition-transform"
+               >
+                  继续游戏
+               </button>
+               <button 
+                  onClick={() => generateLevel(level)}
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-xl shadow-md border-b-4 border-yellow-700 active:scale-95 transition-transform"
+               >
+                  重新开始本关
+               </button>
+               <button 
+                  onClick={() => { setGameState('menu'); setShowSettings(false); }}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md border-b-4 border-red-700 active:scale-95 transition-transform"
+               >
+                  返回主菜单
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 弹窗：胜利或失败 */}
+      {(gameState === 'won' || gameState === 'lost') && !showSettings && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-green-500 animate-bounce">
+             <div className="text-6xl mb-4">
+               {gameState === 'won' ? '🎉' : '😭'}
+             </div>
+             <h2 className="text-3xl font-black mb-2 text-gray-800">
+               {gameState === 'won' ? '你真牛！加入羊群！' : '槽位满了！'}
+             </h2>
+             <p className="text-gray-500 mb-6 font-medium">
+               {gameState === 'won' ? '这手速，绝对是单身二十年练出来的！' : '就差一点点（其实差很多），重来吧！'}
+             </p>
+             <div className="flex flex-col gap-3">
+               <button 
+                  onClick={() => generateLevel(level)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md border-b-4 border-blue-700 active:scale-95 transition-transform"
+               >
+                  再来一局
+               </button>
+               <button 
+                  onClick={() => setGameState('menu')}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-md border-b-4 border-green-700 active:scale-95 transition-transform"
+               >
+                  返回主菜单
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
