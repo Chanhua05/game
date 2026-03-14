@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>欢乐斗地主 - 优化版</title>
+<title>欢乐斗地主</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
@@ -40,7 +40,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0e3d1a;font-family:
 #areaLeft{position:absolute;left:0;top:36px;bottom:126px;width:128px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:30;}
 #areaBottom{position:absolute;bottom:0;left:0;right:0;height:124px;display:flex;flex-direction:column;align-items:center;z-index:30;}
 #playerHand{display:flex;justify-content:center;align-items:flex-end;height:84px;overflow:visible;padding:0 8px;position:relative;}
-#actionBar{height:40px;display:flex;align-items:center;gap:10px;padding:0 16px;background:linear-gradient(to top,#0009,transparent);width:100%;justify-content:center;}
+#actionBar{height:40px;display:flex;align-items:center;gap:8px;padding:0 8px;width:100%;justify-content:center;}
 
 /* WIDGET */
 .pWidget{display:flex;flex-direction:column;align-items:center;gap:3px;}
@@ -126,16 +126,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0e3d1a;font-family:
 .bNoBid{background:linear-gradient(135deg,#555,#333);color:#ccc;}
 .bBid.dim{opacity:.3;pointer-events:none;}
 
-/* BOMB */
-.bFlash{position:absolute;inset:0;background:#fff8;pointer-events:none;z-index:300;animation:bfAnim .35s ease-out forwards;}
-@keyframes bfAnim{from{opacity:.8;}to{opacity:0;}}
-.bTxt{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-size:56px;font-weight:900;color:var(--gold);text-shadow:0 0 25px var(--gold),0 0 50px #e83030;z-index:301;pointer-events:none;animation:btAnim .8s ease-out forwards;}
-@keyframes btAnim{0%{transform:translate(-50%,-50%) scale(.5);opacity:1;}60%{transform:translate(-50%,-50%) scale(1.3);opacity:1;}100%{transform:translate(-50%,-50%) scale(1.1);opacity:0;}}
-
 /* RESULT */
 #resultOv{position:absolute;inset:0;background:#0009;z-index:400;display:none;align-items:center;justify-content:center;}
 #resultOv.show{display:flex;}
-.resPanel{background:linear-gradient(160deg,#1a0800,#2a1400);border:3px solid var(--gold);border-radius:18px;padding:28px 44px;text-align:center;box-shadow:0 15px 50px #0009,0 0 40px #f5c84225;animation:resIn .35s ease-out;}
+.resPanel{background:linear-gradient(160deg,#1a0800,#2a1400);border:3px solid var(--gold);border-radius:18px;padding:28px 44px;text-align:center;box-shadow:0 15px 50px #0009,0 0 40px #f5c84225;animation:resIn .35s ease-out;width:90%;max-width:440px;}
 @keyframes resIn{from{transform:scale(.7) translateY(20px);opacity:0;}to{transform:scale(1);opacity:1;}}
 .resTitle{font-size:44px;font-weight:900;margin-bottom:10px;}
 .win{color:var(--gold);text-shadow:0 0 25px var(--gold);}
@@ -143,6 +137,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0e3d1a;font-family:
 .resScore{color:#c8e8c0;font-size:20px;font-weight:700;margin-bottom:6px;}
 .resDet{color:#88a888;font-size:13px;margin-bottom:18px;}
 .resBtns{display:flex;gap:10px;justify-content:center;}
+
 .toast{position:absolute;top:38%;left:50%;transform:translateX(-50%);background:var(--gold);color:#3a1800;padding:8px 20px;border-radius:30px;font-size:15px;font-weight:700;z-index:500;pointer-events:none;animation:tAnim .8s ease-out forwards;}
 @keyframes tAnim{0%{opacity:1;transform:translateX(-50%) translateY(0);}100%{opacity:0;transform:translateX(-50%) translateY(-30px);}}
 .laiziBadge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;background:linear-gradient(135deg,#c07010,#804000);color:#fff;border:1px solid #f5c84260;}
@@ -219,12 +214,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0e3d1a;font-family:
 
   <!-- Human -->
   <div id="areaBottom">
-    <div id="playerHand"></div>
     <div id="actionBar">
       <button class="btn bHint" onclick="hintPlay()">💡提示</button>
       <button class="btn bPass off" id="btnPass" onclick="playerPass()">不出</button>
       <button class="btn bPlay" id="btnPlay" onclick="playerPlay()">出牌</button>
     </div>
+    <div id="playerHand"></div>
   </div>
 
   <!-- Bid -->
@@ -272,7 +267,7 @@ function makeDeck(){
   d.push({suit:'',rank:'大',id:'大王',_sel:false});
   return d;
 }
-function shuf(a){for(let i=a.length-1;i>0;i--){let j=~~(Math.random()*(i+1));[a[i],a[j]]=[a[i],a[j]]=[a[j],a[i]];}}
+function shuf(a){for(let i=a.length-1;i>0;i--){let j=~~(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
 function cv(c){if(G.mode==='laizi'&&c.rank===G.wildCard)return 18;return BV[c.rank]||0;}
 function isWild(c){return G.mode==='laizi'&&c.rank===G.wildCard;}
 function isRed(c){return c.suit==='♥'||c.suit==='♦';}
