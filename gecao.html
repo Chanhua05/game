@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>割草特工队 - 终极视野与BOSS版</title>
+    <title>割草特工队 - 流派羁绊觉醒版</title>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; background-color: #1a1a2e; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; touch-action: none; }
         canvas { display: block; }
@@ -13,6 +13,10 @@
         #xp-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #00b4d8, #0077b6); transition: width 0.2s; }
         #level-text { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: bold; text-shadow: 1px 1px 2px black; }
         #timer-text { position: absolute; top: 12px; left: 20px; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        
+        /* 羁绊显示面板 (优化版) */
+        #synergy-hud { position: absolute; top: 50%; left: 10px; transform: translateY(-50%); font-size: 14px; background: rgba(20, 25, 45, 0.85); padding: 12px; border-radius: 12px; border: 2px solid #4a4e69; display: none; flex-direction: column; gap: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.8); backdrop-filter: blur(4px); pointer-events: none; z-index: 50; min-width: 170px; }
+
         #settings-btn { position: absolute; top: 12px; right: 20px; background-color: #4a4e69; color: white; border: 2px solid #fff; border-radius: 8px; padding: 5px 15px; font-size: 18px; cursor: pointer; pointer-events: auto; display: none; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
         #settings-btn:hover { background-color: #e94560; }
         #gm-btn { position: absolute; top: 55px; right: 20px; background-color: #fca311; color: #1a1a2e; border: 2px solid #fff; border-radius: 8px; padding: 5px 15px; font-size: 18px; cursor: pointer; pointer-events: auto; display: none; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); font-weight: bold; }
@@ -29,15 +33,15 @@
         .panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(22, 33, 62, 0.95); padding: 30px; border-radius: 15px; border: 3px solid #e94560; text-align: center; display: none; pointer-events: auto; box-shadow: 0 0 30px rgba(0,0,0,0.8); min-width: 340px; max-height: 85vh; overflow-y: auto; }
         .panel h2 { margin-top: 0; color: #e94560; font-size: 28px; }
         
-        .upgrade-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background-color: #0f3460; color: white; border: 2px solid #4a4e69; border-radius: 8px; font-size: 18px; cursor: pointer; transition: all 0.2s; text-align: left; position: relative; overflow: hidden; }
+        .upgrade-btn { display: block; width: 100%; padding: 12px; margin: 10px 0; background-color: #0f3460; color: white; border: 2px solid #4a4e69; border-radius: 8px; font-size: 18px; cursor: pointer; transition: all 0.2s; text-align: left; position: relative; overflow: hidden; }
         .upgrade-btn:hover { background-color: #e94560; border-color: white; transform: scale(1.02); }
         .upgrade-btn.max-level-btn { background: linear-gradient(45deg, #d90429, #ff5c77); border-color: #ffd166; animation: pulse-glow 1.5s infinite alternate; }
-        
         .upgrade-btn.class-exclusive { border-color: #fca311; background-color: #3b2a1a; }
+        
+        .school-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-left: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
         
         @keyframes pulse-glow { from { box-shadow: 0 0 5px #ff5c77; } to { box-shadow: 0 0 20px #ffd166; } }
 
-        /* 升级暂存小球特效 */
         #buff-trigger-btn { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); width: 60px; height: 60px; background: radial-gradient(circle, #00f5d4, #0077b6); border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 20px #00f5d4; display: none; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; pointer-events: auto; animation: float-pulse 2s infinite ease-in-out; z-index: 100; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         #buff-badge { position: absolute; top: -5px; right: -5px; background: #e94560; color: white; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         @keyframes float-pulse { 0% { transform: translateY(-50%) scale(1); box-shadow: 0 0 10px #00f5d4; } 50% { transform: translateY(-50%) scale(1.1); box-shadow: 0 0 30px #00f5d4; } 100% { transform: translateY(-50%) scale(1); box-shadow: 0 0 10px #00f5d4; } }
@@ -59,10 +63,8 @@
         .choice-icon { font-size: 24px; margin-bottom: 5px; }
         .choice-name { font-weight: bold; font-size: 12px; }
 
-        /* GM面板激活按钮高亮 */
         .active-gm-btn { background-color: #4cc9f0 !important; color: #1a1a2e !important; box-shadow: 0 0 10px rgba(76, 201, 240, 0.8); transform: scale(1.05); }
 
-        /* 终极Boss血条容器 */
         #boss-ui { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: none; text-align: center; }
         #boss-name { font-weight: bold; color: #fff; font-size: 18px; text-shadow: 2px 2px 4px #000; margin-bottom: 5px; }
         #boss-hp-bg { width: 100%; height: 25px; background: rgba(0,0,0,0.7); border: 2px solid #5a1818; border-radius: 10px; overflow: hidden; box-shadow: 0 0 15px #ff0000; }
@@ -80,6 +82,9 @@
         <div id="level-text" style="display: none;">Lv. 1</div>
         <div id="timer-text" style="display: none;">10:00</div>
         
+        <!-- 羁绊雷达面板 -->
+        <div id="synergy-hud"></div>
+
         <div id="boss-ui">
             <div id="boss-name">💀 终极领主 💀</div>
             <div id="boss-hp-bg"><div id="boss-hp-fill"></div></div>
@@ -88,7 +93,6 @@
         <button id="settings-btn" onclick="openSettings()">⚙️ 设置</button>
         <button id="gm-btn" onclick="openGM()">🛠️ GM</button>
 
-        <!-- 升级暂存小球 -->
         <div id="buff-trigger-btn" onclick="openUpgradePanel()">🎁<div id="buff-badge">1</div></div>
 
         <div id="joystick-zone">
@@ -96,13 +100,14 @@
         </div>
 
         <div id="start-panel" class="panel">
-            <h2>🌿 割草特工队 🌿<br><span style="font-size:16px; color:#ffd166;">大视野防守版</span></h2>
+            <h2>🌿 割草特工队 🌿<br><span style="font-size:16px; color:#ffd166;">全职业特色版</span></h2>
             
             <div style="text-align: left; padding-left: 10px; font-weight: bold; color: #00f5d4;">特工职业：</div>
             <div class="card-selector">
                 <div class="choice-card active" id="class-warrior" onclick="selectClass('warrior')"><div class="choice-icon">🗡️</div><div class="choice-name">战士</div></div>
                 <div class="choice-card" id="class-mage" onclick="selectClass('mage')"><div class="choice-icon">🧙‍♂️</div><div class="choice-name">法师</div></div>
                 <div class="choice-card" id="class-archer" onclick="selectClass('archer')"><div class="choice-icon">🏹</div><div class="choice-name">射手</div></div>
+                <div class="choice-card" id="class-swordmaster" onclick="selectClass('swordmaster')"><div class="choice-icon">⚔️</div><div class="choice-name">剑侠</div></div>
             </div>
 
             <div style="text-align: left; padding-left: 10px; font-weight: bold; color: #fca311;">作战地图：</div>
@@ -213,26 +218,22 @@
     const joystickKnob = document.getElementById('joystick-knob');
     const bossUi = document.getElementById('boss-ui');
     const bossHpFill = document.getElementById('boss-hp-fill');
+    const synergyHud = document.getElementById('synergy-hud');
 
     let gameState = 'start'; 
     let lastTime = 0; let gameTime = 0; let killCount = 0;
-    let pendingUpgrades = 0; // 新增：记录攒了几次升级机会
+    let pendingUpgrades = 0; 
     let currentMode = 'classic'; 
     let selectedClass = 'warrior'; 
     let selectedMap = 'classic'; 
 
-    // --- GM 爆兵控制 ---
     let gmSpawnRateMult = 1.0;
     let gmSpawnCountMult = 1.0;
-
-    // --- 动态视野 (Zoom) ---
     let currentZoom = 1.0;
 
-    // --- 终极领主 & 角斗场 ---
-    let ultimateBossArena = null; // {x, y, radius}
+    let ultimateBossArena = null; 
     let activeUltimateBoss = null;
 
-    // 地图主题配置 (含新增的沙漠、雪地)
     const mapThemes = {
         classic: { bg: '#1a1a2e', grid: '#2a2a3e', name: '经典' },
         city:    { bg: '#0b0c10', grid: '#1f2833', name: '都市' },
@@ -280,7 +281,7 @@
 
     function selectClass(c) {
         selectedClass = c;
-        ['warrior', 'mage', 'archer'].forEach(id => document.getElementById(`class-${id}`).className = 'choice-card');
+        ['warrior', 'mage', 'archer', 'swordmaster'].forEach(id => document.getElementById(`class-${id}`).className = 'choice-card');
         document.getElementById(`class-${c}`).className = 'choice-card active';
     }
 
@@ -310,10 +311,8 @@
         playExp: () => soundManager.playTone(1200, 1600, 'sine', 0.06, 0.015),
         playCrit: () => soundManager.playTone(1000, 200, 'square', 0.08, 0.015), 
         playVictory: () => {
-            soundManager.playTone(523, null, 'sine', 0.3, 0.1); 
-            setTimeout(() => soundManager.playTone(659, null, 'sine', 0.3, 0.1), 150); 
-            setTimeout(() => soundManager.playTone(783, null, 'sine', 0.3, 0.1), 300); 
-            setTimeout(() => soundManager.playTone(1046, null, 'sine', 0.8, 0.1), 450); 
+            soundManager.playTone(523, null, 'sine', 0.3, 0.1); setTimeout(() => soundManager.playTone(659, null, 'sine', 0.3, 0.1), 150); 
+            setTimeout(() => soundManager.playTone(783, null, 'sine', 0.3, 0.1), 300); setTimeout(() => soundManager.playTone(1046, null, 'sine', 0.8, 0.1), 450); 
         },
         playLevelUp: () => {
             soundManager.playTone(440, null, 'sine', 0.2, 0.05); setTimeout(() => soundManager.playTone(554, null, 'sine', 0.2, 0.05), 100); 
@@ -333,7 +332,6 @@
         stopBGM: function() { if(this.bgmInterval) { clearInterval(this.bgmInterval); this.bgmInterval = null; } }
     };
 
-    // --- 视觉特效类 ---
     class Effect {
         constructor(x1, y1, x2, y2, isAwakened = false) {
             this.x1 = x1; this.y1 = y1; this.x2 = x2; this.y2 = y2;
@@ -385,12 +383,12 @@
             }
         }
         draw() {
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const alphaTime = Math.max(0, this.lifeTime);
-            if (this.type === 'blueFire') { ctx.fillStyle = `rgba(67, 97, 238, ${alphaTime * 0.3})`; ctx.fill(); ctx.strokeStyle = `rgba(76, 201, 240, ${alphaTime})`; ctx.lineWidth = 2; ctx.stroke();
-            } else if (this.type === 'plague') { ctx.fillStyle = `rgba(114, 9, 183, ${alphaTime * 0.4})`; ctx.fill(); ctx.strokeStyle = `rgba(181, 23, 158, ${alphaTime})`; ctx.lineWidth = 2; ctx.stroke();
-            } else if (this.type === 'nuke') { ctx.fillStyle = `rgba(57, 255, 20, ${alphaTime * 0.1})`; ctx.strokeStyle = `rgba(0, 255, 0, ${alphaTime * 0.4})`; ctx.lineWidth = 2; ctx.stroke();
-            } else if (this.type === 'lightning') { ctx.fillStyle = `rgba(255, 92, 119, ${alphaTime * 0.3})`; ctx.fill(); ctx.strokeStyle = `rgba(217, 4, 41, ${alphaTime})`; ctx.lineWidth = 2; ctx.stroke();
-            } else { ctx.fillStyle = `rgba(255, 153, 0, ${alphaTime * 0.3})`; ctx.fill(); ctx.strokeStyle = `rgba(255, 60, 0, ${alphaTime})`; ctx.lineWidth = 2; ctx.stroke(); }
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const alphaTime = Math.max(0, this.lifeTime) * 0.25; 
+            if (this.type === 'blueFire') { ctx.fillStyle = `rgba(67, 97, 238, ${alphaTime * 0.3})`; ctx.fill(); ctx.strokeStyle = `rgba(76, 201, 240, ${alphaTime})`; ctx.lineWidth = 1; ctx.stroke();
+            } else if (this.type === 'plague') { ctx.fillStyle = `rgba(114, 9, 183, ${alphaTime * 0.4})`; ctx.fill(); ctx.strokeStyle = `rgba(181, 23, 158, ${alphaTime})`; ctx.lineWidth = 1; ctx.stroke();
+            } else if (this.type === 'nuke') { ctx.fillStyle = `rgba(57, 255, 20, ${alphaTime * 0.1})`; ctx.strokeStyle = `rgba(0, 255, 0, ${alphaTime * 0.4})`; ctx.lineWidth = 1; ctx.stroke();
+            } else if (this.type === 'lightning') { ctx.fillStyle = `rgba(255, 92, 119, ${alphaTime * 0.3})`; ctx.fill(); ctx.strokeStyle = `rgba(217, 4, 41, ${alphaTime})`; ctx.lineWidth = 1; ctx.stroke();
+            } else { ctx.fillStyle = `rgba(255, 153, 0, ${alphaTime * 0.3})`; ctx.fill(); ctx.strokeStyle = `rgba(255, 60, 0, ${alphaTime})`; ctx.lineWidth = 1; ctx.stroke(); }
         }
     }
 
@@ -402,16 +400,16 @@
         draw() {
             if(this.radius <= 0) return;
             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            if (this.type === 'nuke') ctx.fillStyle = `rgba(57, 255, 20, ${this.life * 3})`;
-            else if (this.type === 'ice') ctx.fillStyle = `rgba(0, 191, 255, ${this.life * 3})`;
-            else if (this.type === 'poison') ctx.fillStyle = `rgba(181, 23, 158, ${this.life * 3})`;
-            else if (this.type === 'bloom') ctx.fillStyle = `rgba(114, 9, 183, ${this.life * 3})`; 
-            else ctx.fillStyle = `rgba(255, 92, 119, ${this.life * 3})`;
+            if (this.type === 'nuke') ctx.fillStyle = `rgba(57, 255, 20, ${this.life * 1.2})`;
+            else if (this.type === 'ice') ctx.fillStyle = `rgba(0, 191, 255, ${this.life * 1.2})`;
+            else if (this.type === 'poison') ctx.fillStyle = `rgba(181, 23, 158, ${this.life * 1.2})`;
+            else if (this.type === 'bloom') ctx.fillStyle = `rgba(114, 9, 183, ${this.life * 1.2})`; 
+            else if (this.type === 'blood_nova') { ctx.fillStyle = `rgba(217, 4, 41, ${this.life * 1.5})`; ctx.strokeStyle = `rgba(255, 0, 0, ${this.life * 0.8})`; ctx.lineWidth = 2; ctx.stroke(); }
+            else ctx.fillStyle = `rgba(255, 92, 119, ${this.life * 1.2})`;
             ctx.fill();
         }
     }
 
-    // Boss 的弹幕
     class EnemyBullet {
         constructor(x, y, angle, speed, damage, radius, color) {
             this.x = x; this.y = y; this.vx = Math.cos(angle)*speed; this.vy = Math.sin(angle)*speed;
@@ -424,10 +422,121 @@
         }
         draw() {
             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
-            ctx.fillStyle = this.color; ctx.fill(); 
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
-            ctx.shadowBlur = 10; ctx.shadowColor = this.color;
-            ctx.shadowBlur = 0;
+            ctx.fillStyle = this.color; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+        }
+    }
+
+    class BaseSlash {
+        constructor(x, y, angle, radius, damage) {
+            this.x = x; this.y = y; this.angle = angle; this.radius = radius; this.damage = damage;
+            this.life = 0.2; this.maxLife = 0.2; this.hitEnemies = new Set(); this.markedForDeletion = false;
+        }
+        update(dt) {
+            this.life -= dt;
+            if (this.life <= 0) { this.markedForDeletion = true; return; }
+            const cx = player.x + Math.cos(this.angle) * 15;
+            const cy = player.y + Math.sin(this.angle) * 15;
+            this.x = cx; this.y = cy; 
+            const dmgInfo = player.calcDamage(this.damage);
+            for (let e of enemies) {
+                if (this.hitEnemies.has(e)) continue;
+                const dist = Math.hypot(e.x - cx, e.y - cy);
+                if (dist < this.radius + e.radius) {
+                    let angleToEnemy = Math.atan2(e.y - cy, e.x - cx);
+                    let angleDiff = Math.abs(angleToEnemy - this.angle);
+                    if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+                    if (angleDiff < Math.PI / 2.5) { 
+                        e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit);
+                        this.hitEnemies.add(e);
+                    }
+                }
+            }
+        }
+        draw() {
+            if (this.life <= 0) return;
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+            const progress = 1 - (this.life / this.maxLife);
+            ctx.rotate(-Math.PI/2.5 + Math.PI * 0.8 * progress);
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, -Math.PI/3, Math.PI/3);
+            ctx.strokeStyle = `rgba(224, 225, 221, ${this.life * 5})`;
+            ctx.lineWidth = 15;
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    class MagicAOE {
+        constructor(x, y, radius, damage) {
+            this.x = x; this.y = y; this.radius = radius; this.damage = damage;
+            this.life = 0.5; this.maxLife = 0.5; this.markedForDeletion = false;
+            this.damaged = false;
+        }
+        update(dt) {
+            this.life -= dt;
+            if (this.life <= 0 && !this.damaged) {
+                this.damaged = true;
+                const dmgInfo = player.calcDamage(this.damage);
+                for (let e of enemies) {
+                    if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
+                        e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit);
+                    }
+                }
+                effects.push(new Explosion(this.x, this.y, this.radius, false, 'bloom'));
+                this.markedForDeletion = true;
+            }
+        }
+        draw() {
+            const progress = 1 - (this.life / this.maxLife);
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * progress, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(155, 93, 229, ${this.life * 2})`; ctx.fill();
+            ctx.strokeStyle = '#9b5de5'; ctx.lineWidth = 2; ctx.stroke();
+        }
+    }
+
+    class BaseArrow {
+        constructor(x, y, angle, speed, damage, pierce) {
+            this.x = x; this.y = y; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+            this.damage = damage; this.pierce = pierce; this.lifeTime = 2; this.markedForDeletion = false;
+            this.hitEnemies = new Set();
+        }
+        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifeTime -= dt; if (this.lifeTime <= 0) this.markedForDeletion = true; }
+        draw() {
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(Math.atan2(this.vy, this.vx));
+            ctx.fillStyle = '#8b5a2b'; ctx.fillRect(-10, -1, 20, 2); 
+            ctx.beginPath(); ctx.moveTo(10, -4); ctx.lineTo(16, 0); ctx.lineTo(10, 4); ctx.fillStyle = '#fff'; ctx.fill(); 
+            ctx.restore();
+        }
+    }
+
+    class FlyingSword {
+        constructor(x, y, angle, speed, damage, target) {
+            this.x = x; this.y = y; 
+            this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+            this.speed = speed; this.damage = damage; this.target = target; 
+            this.lifeTime = 3; this.markedForDeletion = false; this.hitEnemies = new Set();
+        }
+        update(dt) {
+            this.lifeTime -= dt; if (this.lifeTime <= 0) { this.markedForDeletion = true; return; }
+            if (this.target && !this.target.markedForDeletion) {
+                const desiredAngle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+                const currentAngle = Math.atan2(this.vy, this.vx);
+                let angleDiff = desiredAngle - currentAngle;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                const newAngle = currentAngle + angleDiff * 5.0 * dt; 
+                this.vx = Math.cos(newAngle) * this.speed; this.vy = Math.sin(newAngle) * this.speed;
+            }
+            this.x += this.vx * dt; this.y += this.vy * dt;
+        }
+        draw() {
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(Math.atan2(this.vy, this.vx));
+            ctx.fillStyle = '#00b4d8'; ctx.fillRect(-12, -2, 24, 4); 
+            ctx.beginPath(); ctx.moveTo(12, -2); ctx.lineTo(18, 0); ctx.lineTo(12, 2); ctx.fillStyle = '#fff'; ctx.fill(); 
+            ctx.fillStyle = '#fca311'; ctx.fillRect(-8, -6, 4, 12); 
+            ctx.fillStyle = '#8d99ae'; ctx.fillRect(-16, -1.5, 8, 3); 
+            ctx.shadowBlur = 10; ctx.shadowColor = '#00b4d8';
+            ctx.restore();
         }
     }
 
@@ -443,8 +552,7 @@
             for (let e of enemies) {
                 if (this.hitEnemies.has(e)) continue;
                 if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
-                    e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit);
-                    this.hitEnemies.add(e);
+                    e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit); this.hitEnemies.add(e);
                 }
             }
         }
@@ -453,13 +561,8 @@
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
             ctx.strokeStyle = this.isAwakened ? '#f72585' : '#b5179e';
             ctx.lineWidth = (this.life / this.maxLife) * (this.isAwakened ? 25 : 15);
-            ctx.beginPath(); 
-            ctx.moveTo(-this.radius, 0); ctx.lineTo(this.radius, 0); 
-            ctx.stroke();
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, this.radius * 0.8, (this.life / this.maxLife) * 5, 0, 0, Math.PI*2);
-            ctx.fill();
+            ctx.beginPath(); ctx.moveTo(-this.radius, 0); ctx.lineTo(this.radius, 0); ctx.stroke();
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0, 0, this.radius * 0.8, (this.life / this.maxLife) * 5, 0, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
     }
@@ -467,8 +570,7 @@
     class Turret {
         constructor(x, y, damage, isAwakened) {
             this.x = x; this.y = y; this.damage = damage; this.isAwakened = isAwakened;
-            this.life = 5; this.fireTimer = 0; this.fireRate = isAwakened ? 0.15 : 0.4;
-            this.markedForDeletion = false;
+            this.life = 5; this.fireTimer = 0; this.fireRate = isAwakened ? 0.15 : 0.4; this.markedForDeletion = false;
         }
         update(dt) {
             this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
@@ -486,8 +588,7 @@
         }
         draw() {
             ctx.save(); ctx.translate(this.x, this.y);
-            ctx.fillStyle = '#4a4e69'; ctx.fillRect(-10, -10, 20, 20);
-            ctx.fillStyle = this.isAwakened ? '#ffb703' : '#00f5d4';
+            ctx.fillStyle = '#4a4e69'; ctx.fillRect(-10, -10, 20, 20); ctx.fillStyle = this.isAwakened ? '#ffb703' : '#00f5d4';
             ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI*2); ctx.fill();
             ctx.strokeStyle = `rgba(255,255,255,${this.life/5})`; ctx.strokeRect(-12, -12, 24, 24);
             ctx.restore();
@@ -501,18 +602,14 @@
             this.lifeTime = 3; this.markedForDeletion = false; this.angle = 0;
         }
         update(dt) {
-            this.x += this.vx * dt; this.y += this.vy * dt; this.lifeTime -= dt;
-            this.angle += 15 * dt;
+            this.x += this.vx * dt; this.y += this.vy * dt; this.lifeTime -= dt; this.angle += 15 * dt;
             if (this.lifeTime <= 0) this.markedForDeletion = true;
         }
         draw() {
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
             ctx.fillStyle = this.isAwakened ? '#fca311' : '#adb5bd';
             ctx.beginPath();
-            for(let i=0; i<4; i++) {
-                ctx.lineTo(0, -this.radius); ctx.lineTo(3, -3);
-                ctx.rotate(Math.PI/2);
-            }
+            for(let i=0; i<4; i++) { ctx.lineTo(0, -this.radius); ctx.lineTo(3, -3); ctx.rotate(Math.PI/2); }
             ctx.fill(); ctx.restore();
         }
     }
@@ -520,43 +617,32 @@
     class Slash {
         constructor(x, y, angle, radius, damage, isAwakened) {
             this.x = x; this.y = y; this.angle = angle; this.radius = isAwakened ? radius * 1.5 : radius;
-            this.damage = damage; this.isAwakened = isAwakened;
-            this.life = 0.25; this.maxLife = 0.25; this.hitEnemies = new Set();
+            this.damage = damage; this.isAwakened = isAwakened; this.life = 0.25; this.maxLife = 0.25; this.hitEnemies = new Set();
         }
         update(dt) {
-            this.life -= dt;
-            if (this.life <= 0) { this.markedForDeletion = true; return; }
-            const cx = player.x + Math.cos(this.angle) * 20;
-            const cy = player.y + Math.sin(this.angle) * 20;
+            this.life -= dt; if (this.life <= 0) { this.markedForDeletion = true; return; }
+            const cx = player.x + Math.cos(this.angle) * 20; const cy = player.y + Math.sin(this.angle) * 20;
             this.x = cx; this.y = cy; 
-
             const dmgInfo = player.calcDamage(this.damage);
             for (let e of enemies) {
                 if (this.hitEnemies.has(e)) continue;
-                if (Math.hypot(e.x - cx, e.y - cy) < this.radius + e.radius) {
-                    e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit);
-                    this.hitEnemies.add(e);
-                }
+                if (Math.hypot(e.x - cx, e.y - cy) < this.radius + e.radius) { e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit); this.hitEnemies.add(e); }
             }
         }
         draw() {
             if (this.life <= 0) return;
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
-            const progress = 1 - (this.life / this.maxLife);
-            ctx.rotate(-Math.PI/2 + Math.PI * progress);
-            ctx.beginPath();
-            ctx.arc(0, 0, this.radius, -Math.PI/3, Math.PI/3);
+            const progress = 1 - (this.life / this.maxLife); ctx.rotate(-Math.PI/2 + Math.PI * progress);
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, -Math.PI/3, Math.PI/3);
             ctx.strokeStyle = this.isAwakened ? `rgba(181, 23, 158, ${this.life * 4})` : `rgba(239, 35, 60, ${this.life * 4})`;
-            ctx.lineWidth = this.isAwakened ? 40 : 20;
-            ctx.stroke();
-            ctx.restore();
+            ctx.lineWidth = this.isAwakened ? 40 : 20; ctx.stroke(); ctx.restore();
         }
     }
 
     class Shockwave {
-        constructor(x, y, maxRadius, damage) {
+        constructor(x, y, maxRadius, damage, type = 'normal') {
             this.x = x; this.y = y; this.maxRadius = maxRadius; this.radius = 10; this.damage = damage;
-            this.life = 0.4; this.markedForDeletion = false; this.hitEnemies = new Set();
+            this.life = 0.4; this.markedForDeletion = false; this.hitEnemies = new Set(); this.type = type;
         }
         update(dt) {
             this.life -= dt; this.radius += (this.maxRadius - this.radius) * 8 * dt;
@@ -566,21 +652,28 @@
                 if (this.hitEnemies.has(e)) continue;
                 if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
                     e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit); this.hitEnemies.add(e);
-                    const angle = Math.atan2(e.y - this.y, e.x - this.x); e.x += Math.cos(angle)*30; e.y += Math.sin(angle)*30;
+                    if (this.type !== 'synergy_tech') {
+                        const angle = Math.atan2(e.y - this.y, e.x - this.x); e.x += Math.cos(angle)*30; e.y += Math.sin(angle)*30;
+                    }
                 }
             }
         }
         draw() {
             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${this.life * 2.5})`; ctx.lineWidth = 10; ctx.stroke();
+            if (this.type === 'synergy_tech') {
+                ctx.strokeStyle = `rgba(0, 245, 212, ${this.life * 1.0})`; ctx.lineWidth = 6; ctx.stroke();
+                ctx.fillStyle = `rgba(0, 245, 212, ${this.life * 0.2})`; ctx.fill();
+            } else {
+                ctx.strokeStyle = `rgba(255, 255, 255, ${this.life * 1.0})`; ctx.lineWidth = 4; ctx.stroke();
+            }
         }
     }
 
     class Meteor {
-        constructor(tx, ty, damage, blastRadius, isAwakened) {
+        constructor(tx, ty, damage, blastRadius, isAwakened, type = 'normal') {
             this.tx = tx; this.ty = ty; this.x = tx + (Math.random()*200 - 100); this.y = ty - 800; 
             this.damage = damage; this.blastRadius = isAwakened ? blastRadius * 2 : blastRadius; this.isAwakened = isAwakened;
-            this.speed = 1200; this.markedForDeletion = false;
+            this.speed = 1200; this.markedForDeletion = false; this.type = type;
         }
         update(dt) {
             const angle = Math.atan2(this.ty - this.y, this.tx - this.x);
@@ -590,28 +683,55 @@
                 const dmgInfo = player.calcDamage(this.damage);
                 for (let e of enemies) { if (Math.hypot(e.x - this.tx, e.y - this.ty) < this.blastRadius + e.radius) { e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit); } }
                 effects.push(new Explosion(this.tx, this.ty, this.blastRadius, this.isAwakened));
-                if(this.isAwakened) damageZones.push(new DamageZone(this.tx, this.ty, this.blastRadius, this.damage * 0.5, 'fire'));
+                if(this.isAwakened && this.type !== 'synergy_ele') damageZones.push(new DamageZone(this.tx, this.ty, this.blastRadius, this.damage * 0.5, 'fire'));
             }
         }
         draw() {
             ctx.beginPath(); ctx.arc(this.x, this.y, this.isAwakened ? 30 : 20, 0, Math.PI*2);
-            ctx.fillStyle = this.isAwakened ? '#d90429' : '#ffb703'; ctx.fill();
-            ctx.shadowBlur = 20; ctx.shadowColor = '#ff5c77';
+            if (this.type === 'synergy_ele') {
+                ctx.fillStyle = '#8a2be2'; ctx.fill(); ctx.shadowBlur = 30; ctx.shadowColor = '#e0b0ff';
+            } else {
+                ctx.fillStyle = this.isAwakened ? '#d90429' : '#ffb703'; ctx.fill(); ctx.shadowBlur = 20; ctx.shadowColor = '#ff5c77';
+            }
+            ctx.shadowBlur = 0;
         }
     }
 
     class Arrow {
-        constructor(x, y, angle, speed, damage, isAwakened) {
+        constructor(x, y, angle, speed, damage, isAwakened, type = 'normal') {
             this.x = x; this.y = y; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
             this.damage = damage; this.isAwakened = isAwakened; this.lifeTime = 3; this.markedForDeletion = false;
-            this.hitEnemies = new Set();
+            this.hitEnemies = new Set(); this.type = type;
         }
         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifeTime -= dt; if (this.lifeTime <= 0) this.markedForDeletion = true; }
         draw() {
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(Math.atan2(this.vy, this.vx));
-            ctx.fillStyle = this.isAwakened ? '#00f5d4' : '#fff'; ctx.fillRect(-15, -2, 30, 4); 
-            ctx.beginPath(); ctx.moveTo(15, -6); ctx.lineTo(25, 0); ctx.lineTo(15, 6); ctx.fillStyle = this.isAwakened ? '#fee440' : '#ef233c'; ctx.fill(); 
+            if (this.type === 'synergy_blade') {
+                ctx.fillStyle = '#ffd166'; ctx.fillRect(-20, -3, 40, 6);
+                ctx.beginPath(); ctx.moveTo(20, -8); ctx.lineTo(35, 0); ctx.lineTo(20, 8); ctx.fillStyle = '#fff'; ctx.fill(); 
+                ctx.shadowBlur = 15; ctx.shadowColor = '#fca311';
+            } else {
+                ctx.fillStyle = this.isAwakened ? '#00f5d4' : '#fff'; ctx.fillRect(-15, -2, 30, 4); 
+                ctx.beginPath(); ctx.moveTo(15, -6); ctx.lineTo(25, 0); ctx.lineTo(15, 6); ctx.fillStyle = this.isAwakened ? '#fee440' : '#ef233c'; ctx.fill(); 
+            }
             ctx.restore();
+        }
+    }
+
+    class Bullet {
+        constructor(x, y, angle, speed, baseDamage, pierce, isPlasma = false) {
+            this.x = x; this.y = y; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+            this.radius = isPlasma ? 18 : 6; this.baseDamage = baseDamage; this.pierce = pierce; this.isPlasma = isPlasma; 
+            this.hitEnemies = new Set(); this.lifeTime = 2; this.markedForDeletion = false;
+        }
+        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifeTime -= dt; if (this.lifeTime <= 0) this.markedForDeletion = true; }
+        draw() {
+            if(this.radius <= 0) return;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            if (this.isPlasma) {
+                ctx.fillStyle = '#4cc9f0'; ctx.shadowBlur = 20; ctx.shadowColor = '#4361ee'; ctx.fill();
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
+            } else { ctx.fillStyle = '#fee440'; ctx.fill(); ctx.shadowBlur = 10; ctx.shadowColor = '#fee440'; ctx.shadowBlur = 0; }
         }
     }
 
@@ -708,12 +828,12 @@
         draw() {
             if(this.radius <= 0) return;
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(gameTime * (this.isAwakened ? -5 : 3)); 
-            ctx.beginPath(); ctx.arc(0, 0, this.radius * 0.5, 0, Math.PI*2); ctx.fillStyle = '#000'; ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, this.radius * 0.5, 0, Math.PI*2); ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.fill();
             ctx.beginPath(); ctx.ellipse(0, 0, this.radius, this.radius * 0.4, 0, 0, Math.PI*2);
-            ctx.strokeStyle = this.isAwakened ? '#7209b7' : '#4cc9f0'; ctx.lineWidth = this.isAwakened ? 6 : 3;
-            ctx.shadowBlur = 20; ctx.shadowColor = this.isAwakened ? '#f72585' : '#4cc9f0'; ctx.stroke();
+            ctx.strokeStyle = this.isAwakened ? 'rgba(114, 9, 183, 0.3)' : 'rgba(76, 201, 240, 0.3)'; ctx.lineWidth = this.isAwakened ? 2 : 1;
+            ctx.shadowBlur = 5; ctx.shadowColor = this.isAwakened ? '#f72585' : '#4cc9f0'; ctx.stroke();
             ctx.beginPath(); ctx.arc(0, 0, this.pullRadius, 0, Math.PI*2);
-            ctx.strokeStyle = `rgba(114, 9, 183, ${Math.max(0, this.lifeTime)*0.1})`; ctx.lineWidth = 1; ctx.stroke();
+            ctx.strokeStyle = `rgba(114, 9, 183, ${Math.max(0, this.lifeTime)*0.02})`; ctx.lineWidth = 1; ctx.stroke();
             ctx.restore();
         }
     }
@@ -749,23 +869,6 @@
                 ctx.fillStyle = '#4cc9f0'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
             }
             ctx.restore();
-        }
-    }
-
-    class Bullet {
-        constructor(x, y, angle, speed, baseDamage, pierce, isPlasma = false) {
-            this.x = x; this.y = y; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
-            this.radius = isPlasma ? 18 : 6; this.baseDamage = baseDamage; this.pierce = pierce; this.isPlasma = isPlasma; 
-            this.hitEnemies = new Set(); this.lifeTime = 2; this.markedForDeletion = false;
-        }
-        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifeTime -= dt; if (this.lifeTime <= 0) this.markedForDeletion = true; }
-        draw() {
-            if(this.radius <= 0) return;
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            if (this.isPlasma) {
-                ctx.fillStyle = '#4cc9f0'; ctx.shadowBlur = 20; ctx.shadowColor = '#4361ee'; ctx.fill();
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
-            } else { ctx.fillStyle = '#fee440'; ctx.fill(); ctx.shadowBlur = 10; ctx.shadowColor = '#fee440'; ctx.shadowBlur = 0; }
         }
     }
 
@@ -823,42 +926,45 @@
     }
 
     const possibleUpgrades = [
-        { id: 'shockwave', name: '震荡波', desc: '[战士专属] 周期性爆开能量环。满级：地震波！', icon: '〰️', classReq: 'warrior' },
-        { id: 'berserker', name: '狂战之血', desc: '[战士专属] 血越低，伤害攻速越高。满级：不屈战神！', icon: '🩸', classReq: 'warrior' },
-        { id: 'meteor', name: '陨石术', desc: '[法师专属] 召唤陨石轰炸。满级：群星陨落！', icon: '☄️', classReq: 'mage' },
-        { id: 'elemental', name: '元素精通', desc: '[法师专属] 大幅增加所有AoE范围。满级：禁咒使！', icon: '🔮', classReq: 'mage' },
-        { id: 'arrow', name: '穿云箭', desc: '[射手专属] 极速高穿透巨箭。满级：贯穿天地！', icon: '🏹', classReq: 'archer' },
-        { id: 'hawkeye', name: '鹰眼', desc: '[射手专属] 大幅提升暴击和拾取范围。满级：神射手！', icon: '👁️', classReq: 'archer' },
-        { id: 'holy_shield', name: '圣骑士护盾', desc: '周期获得护盾，完全免疫一次伤害！满级：叠3层！', icon: '🛡️' },
-        { id: 'death_ray', name: '幻影死光', desc: '发射瞬间穿透全屏的极光。满级：毁灭双射线！', icon: '🔫' },
-        { id: 'death_bloom', name: '死亡爆破', desc: '击杀敌人概率引发干净的爆炸。满级：必定连爆！', icon: '💥' },
-        { id: 'void_slash', name: '虚空斩', desc: '随机在敌人身上撕开次元斩击。满级：全屏剑阵！', icon: '⚔️' },
-        { id: 'turret', name: '迷你炮台', desc: '放置一个自动射击的小炮台。满级：等离子机枪！', icon: '🤖' },
-        { id: 'shuriken', name: '忍者手里剑', desc: '向四周发射穿透飞镖。满级：八方手里剑！', icon: '🥷' },
-        { id: 'scythe', name: '死神镰刀', desc: '大范围近战横扫。满级：灵魂收割！', icon: '🌙' },
-        { id: 'thorns', name: '反伤刺甲', desc: '受击时反弹伤害，增加护甲。满级：刺猬真身！', icon: '🦔' },
-        { id: 'haste', name: '狂热沙漏', desc: '全面加快所有武器冷却速度！满级：无限火力！', icon: '⏳' },
-        { id: 'xp_scroll', name: '经验卷轴', desc: '获得更多经验。满级：升级狂魔！', icon: '✨' },
-        { id: 'vampire', name: '吸血鬼牙齿', desc: '打怪概率回血。满级：化身德古拉！', icon: '🧛' },
-        { id: 'frost', name: '冰霜法杖', desc: '爆出冰环减速敌人。满级：绝对零度！', icon: '🧊' },
-        { id: 'drone', name: '战斗无人机', desc: '召唤僚机自动攻击。满级：天启机甲！', icon: '🚁' },
-        { id: 'axe', name: '斩骨斧', desc: '抛出高伤害斧头。满级：刑天战斧！', icon: '🪓' },
-        { id: 'molotov', name: '燃烧瓶', desc: '留下火区。满级：觉醒【幽冥地火】！', icon: '🍾' },
-        { id: 'boomerang', name: '回旋镖', desc: '飞出并返回伤害。满级：觉醒【磁爆回旋刃】！', icon: '🪃' },
-        { id: 'missile', name: '追踪导弹', desc: '自动寻找敌人。满级：觉醒【末日核弹】！', icon: '🚀' },
-        { id: 'blackhole', name: '引力发生器', desc: '微型黑洞聚怪。满级：觉醒【湮灭奇点】！', icon: '🌌' },
-        { id: 'crit', name: '暴击眼镜', desc: '增加暴击率与暴伤。满级：招招致命！', icon: '👓' },
-        { id: 'dmg', name: '肌肉强化', desc: '增加伤害。满级：伤害爆炸翻倍！', icon: '💪' },
-        { id: 'speed', name: '快手', desc: '提高射速。满级：加特林射速！', icon: '⚡' },
-        { id: 'pierce', name: '穿甲弹', desc: '增加穿透。满级：额外+5次穿透！', icon: '🎯' },
-        { id: 'aura', name: '能量光环', desc: '护体光环。满级：觉醒【地狱火领域】！', icon: '☀️' },
-        { id: 'heal', name: '急救包', desc: '恢复生命。满级：血量大增并回满！', icon: '❤️' },
-        { id: 'multishot', name: '散弹枪', desc: '增加多重射击。满级：觉醒【虚空等离子】！', icon: '🔫' },
-        { id: 'lightning', name: '雷电发射器', desc: '降下落雷。满级：觉醒【天劫神雷】！', icon: '🌩️' },
-        { id: 'guardian', name: '守卫者', desc: '召唤旋转飞刃。满级：觉醒【黄金轮锯】！', icon: '⚙️' },
-        { id: 'magnet', name: '强力磁铁', desc: '增加拾取范围。满级：全屏吸收！', icon: '🧲' },
-        { id: 'movespeed', name: '运动鞋', desc: '提升移速。满级：凌波微步！', icon: '👟' },
-        { id: 'maxhp', name: '健身指南', desc: '增加最大生命。满级：血牛降世！', icon: '📘' }
+        { id: 'meteor', name: '陨石术', desc: '召唤陨石轰炸。满级：群星陨落！', icon: '☄️', classReq: 'mage', schoolId: 'elemental', schoolName: '毁灭元素' },
+        { id: 'elemental', name: '元素精通', desc: '增加所有AoE范围。满级：禁咒使！', icon: '🔮', classReq: 'mage', schoolId: 'elemental', schoolName: '毁灭元素' },
+        { id: 'molotov', name: '燃烧瓶', desc: '留下火区。满级：觉醒【幽冥地火】！', icon: '🍾', schoolId: 'elemental', schoolName: '毁灭元素' },
+        { id: 'lightning', name: '雷电发射器', desc: '降下落雷。满级：觉醒【天劫神雷】！', icon: '🌩️', schoolId: 'elemental', schoolName: '毁灭元素' },
+        { id: 'missile', name: '追踪导弹', desc: '自动寻找敌人。满级：觉醒【末日核弹】！', icon: '🚀', schoolId: 'elemental', schoolName: '毁灭元素' },
+        { id: 'blackhole', name: '引力发生器', desc: '微型黑洞聚怪。满级：觉醒【湮灭奇点】！', icon: '🌌', schoolId: 'elemental', schoolName: '毁灭元素' },
+        { id: 'death_bloom', name: '死亡爆破', desc: '击杀概率引发爆炸。满级：必定连爆！', icon: '💥', schoolId: 'elemental', schoolName: '毁灭元素' },
+        { id: 'frost', name: '冰霜法杖', desc: '爆出冰环减速敌人。满级：绝对零度！', icon: '🧊', schoolId: 'elemental', schoolName: '毁灭元素' },
+
+        { id: 'arrow', name: '穿云箭', desc: '极速高穿透巨箭。满级：贯穿天地！', icon: '🏹', classReq: 'archer', schoolId: 'blade', schoolName: '极意剑阵' },
+        { id: 'void_slash', name: '虚空斩', desc: '随机次元斩击。满级：全屏剑阵！', icon: '⚔️', schoolId: 'blade', schoolName: '极意剑阵' },
+        { id: 'shuriken', name: '忍者手里剑', desc: '向四周发射飞镖。满级：八方手里剑！', icon: '🥷', schoolId: 'blade', schoolName: '极意剑阵' },
+        { id: 'scythe', name: '死神镰刀', desc: '大范围近战横扫。满级：灵魂收割！', icon: '🌙', schoolId: 'blade', schoolName: '极意剑阵' },
+        { id: 'axe', name: '斩骨斧', desc: '抛出高伤害斧头。满级：刑天战斧！', icon: '🪓', schoolId: 'blade', schoolName: '极意剑阵' },
+        { id: 'boomerang', name: '回旋镖', desc: '飞出并返回伤害。满级：觉醒【磁爆回旋刃】！', icon: '🪃', schoolId: 'blade', schoolName: '极意剑阵' },
+        { id: 'pierce', name: '穿甲弹', desc: '增加穿透。满级：额外+5次穿透！', icon: '🎯', schoolId: 'blade', schoolName: '极意剑阵' },
+        { id: 'multishot', name: '散弹枪', desc: '增加多重射击。满级：觉醒【虚空等离子】！', icon: '🔫', schoolId: 'blade', schoolName: '极意剑阵' },
+        { id: 'guardian', name: '守卫者', desc: '召唤旋转飞刃。满级：觉醒【黄金轮锯】！', icon: '⚙️', schoolId: 'blade', schoolName: '极意剑阵' },
+
+        { id: 'shockwave', name: '震荡波', desc: '周期爆开能量环。满级：地震波！', icon: '〰️', classReq: 'warrior', schoolId: 'tech', schoolName: '赛博科技' },
+        { id: 'holy_shield', name: '圣骑士护盾', desc: '周期免疫一次伤害！满级：叠3层！', icon: '🛡️', schoolId: 'tech', schoolName: '赛博科技' },
+        { id: 'death_ray', name: '幻影死光', desc: '穿透全屏的极光。满级：毁灭双射线！', icon: '🔫', schoolId: 'tech', schoolName: '赛博科技' },
+        { id: 'turret', name: '迷你炮台', desc: '自动射击的小炮台。满级：等离子机枪！', icon: '🤖', schoolId: 'tech', schoolName: '赛博科技' },
+        { id: 'thorns', name: '反伤刺甲', desc: '受击反弹伤害。满级：刺猬真身！', icon: '🦔', schoolId: 'tech', schoolName: '赛博科技' },
+        { id: 'drone', name: '战斗无人机', desc: '召唤僚机自动攻击。满级：天启机甲！', icon: '🚁', schoolId: 'tech', schoolName: '赛博科技' },
+        { id: 'aura', name: '能量光环', desc: '护体光环。满级：觉醒【地狱火领域】！', icon: '☀️', schoolId: 'tech', schoolName: '赛博科技' },
+        { id: 'magnet', name: '强力磁铁', desc: '增加拾取范围。满级：全屏吸收！', icon: '🧲', schoolId: 'tech', schoolName: '赛博科技' },
+
+        { id: 'berserker', name: '狂战之血', desc: '血低伤高。满级：不屈战神！', icon: '🩸', classReq: 'warrior', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'hawkeye', name: '鹰眼', desc: '提升暴击和拾取。满级：神射手！', icon: '👁️', classReq: 'archer', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'haste', name: '狂热沙漏', desc: '加快冷却速度！满级：无限火力！', icon: '⏳', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'xp_scroll', name: '经验卷轴', desc: '获得更多经验。满级：升级狂魔！', icon: '✨', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'vampire', name: '吸血鬼牙齿', desc: '打怪概率回血。满级：化身德古拉！', icon: '🧛', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'crit', name: '暴击眼镜', desc: '增加暴击率与暴伤。满级：招招致命！', icon: '👓', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'dmg', name: '肌肉强化', desc: '增加伤害。满级：伤害爆炸翻倍！', icon: '💪', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'speed', name: '快手', desc: '提高射速。满级：加特林射速！', icon: '⚡', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'heal', name: '急救包', desc: '恢复生命。满级：血量大增并回满！', icon: '❤️', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'movespeed', name: '运动鞋', desc: '提升移速。满级：凌波微步！', icon: '👟', schoolId: 'blood', schoolName: '嗜血狂战' },
+        { id: 'maxhp', name: '健身指南', desc: '增加最大生命。满级：血牛降世！', icon: '📘', schoolId: 'blood', schoolName: '嗜血狂战' }
     ];
 
     class Player {
@@ -874,16 +980,21 @@
             this.pickupRange = 80; 
             this.invincibleTimer = 0; 
 
-            if (pClass === 'warrior') {
-                this.maxHp = 150; this.hp = 150; this.speed = 220; this.damageMultiplier = 1.2; this.color = '#e63946';
-            } else if (pClass === 'mage') {
-                this.maxHp = 80; this.hp = 80; this.speed = 240; this.damageMultiplier = 1.5; this.color = '#9b5de5';
-            } else if (pClass === 'archer') {
-                this.maxHp = 80; this.hp = 80; this.speed = 280; this.fireRateMultiplier = 1.5; this.color = '#06d6a0';
-            }
+            this.synergyScores = { elemental: 0, blade: 0, tech: 0, blood: 0 };
+            this.bonusCritFromBlood = 0;
+            this.synEleTimer = 0;
+            this.synBladeTimer = 0;
+            this.synTechTimer = 0;
+
+            // 职业基础设定调整
+            this.baseFireCooldown = 0.8; 
+            if (pClass === 'warrior') { this.maxHp = 150; this.hp = 150; this.speed = 220; this.damageMultiplier = 1.2; this.color = '#e63946'; this.baseFireCooldown = 0.6; } 
+            else if (pClass === 'mage') { this.maxHp = 80; this.hp = 80; this.speed = 240; this.damageMultiplier = 1.5; this.color = '#9b5de5'; this.baseFireCooldown = 1.0; } 
+            else if (pClass === 'archer') { this.maxHp = 80; this.hp = 80; this.speed = 280; this.fireRateMultiplier = 1.5; this.color = '#06d6a0'; this.baseFireCooldown = 0.5; }
+            else if (pClass === 'swordmaster') { this.maxHp = 100; this.hp = 100; this.speed = 260; this.damageMultiplier = 1.3; this.color = '#00b4d8'; this.baseFireCooldown = 0.7; }
 
             this.lastDirAngle = 0;
-            this.baseFireCooldown = 0.8; this.fireTimer = 0; this.bulletSpeed = 400; this.bulletDamage = 25; this.bulletPierce = 1; this.projectileCount = 1;
+            this.fireTimer = 0; this.bulletSpeed = 400; this.bulletDamage = 25; this.bulletPierce = 1; this.projectileCount = 1;
             
             this.shieldCount = 0; this.maxShield = 0; this.shieldRegenTimer = 0; this.shieldRegenTime = 10;
             this.hasDeathRay = false; this.deathRayTimer = 0; this.deathRayCooldown = 4; this.deathRayDamage = 150;
@@ -913,6 +1024,19 @@
             if (currentMode === 'rampage') { this.speed *= 1.2; this.fireRateMultiplier *= 1.5; this.pickupRange += 50; }
         }
 
+        calculateSynergies() {
+            this.synergyScores = { elemental: 0, blade: 0, tech: 0, blood: 0 };
+            for (let id in this.upgrades) {
+                let lvl = this.upgrades[id];
+                if (lvl > 0) {
+                    let buff = possibleUpgrades.find(u => u.id === id);
+                    if (buff && buff.schoolId) { this.synergyScores[buff.schoolId] += lvl; }
+                }
+            }
+            this.bonusCritFromBlood = (this.synergyScores.blood >= 3) ? (this.synergyScores.blood * 0.01) : 0;
+            updateSynergyHUD();
+        }
+
         calcDamage(baseDamage) {
             let actualDmgMult = this.damageMultiplier;
             let actualFireRate = this.fireRateMultiplier;
@@ -922,7 +1046,10 @@
                 actualDmgMult += boost; actualFireRate += boost;
             }
             let dmg = baseDamage * actualDmgMult; 
-            let isCrit = Math.random() < this.critChance;
+            
+            let actualCritChance = this.critChance + this.bonusCritFromBlood;
+            let isCrit = Math.random() < actualCritChance;
+            
             if (isCrit) dmg *= this.critMultiplier; 
             return { dmg: dmg, isCrit: isCrit, fireRate: actualFireRate };
         }
@@ -941,7 +1068,6 @@
 
             this.x += dx * this.speed * dt; this.y += dy * this.speed * dt;
 
-            // --- 角斗场边界限制 ---
             if (ultimateBossArena) {
                 let distToCenter = Math.hypot(this.x - ultimateBossArena.x, this.y - ultimateBossArena.y);
                 if (distToCenter > ultimateBossArena.radius - this.radius) {
@@ -959,16 +1085,51 @@
             const currentFireRate = this.calcDamage(0).fireRate;
             const aoeBonus = (this.upgrades['elemental']) ? (this.upgrades['elemental'] >= 5 ? 2.0 : 1 + this.upgrades['elemental']*0.15) : 1.0;
 
+            if (this.synergyScores.elemental >= 3) {
+                this.synEleTimer -= dt;
+                if (this.synEleTimer <= 0) {
+                    this.synEleTimer = Math.max(1.0, 4.0 - this.synergyScores.elemental * 0.15); 
+                    let meteorCount = Math.max(1, Math.floor(this.synergyScores.elemental / 2)); 
+                    for(let i=0; i<meteorCount; i++) {
+                        if (enemies.length > 0) {
+                            let t = enemies[Math.floor(Math.random()*enemies.length)];
+                            meteors.push(new Meteor(t.x, t.y, 100 + this.synergyScores.elemental * 15, 100 + this.synergyScores.elemental * 5, true, 'synergy_ele'));
+                        }
+                    }
+                }
+            }
+
+            if (this.synergyScores.blade >= 3) {
+                this.synBladeTimer -= dt;
+                if (this.synBladeTimer <= 0) {
+                    this.synBladeTimer = Math.max(0.8, 3.0 - this.synergyScores.blade * 0.1);
+                    let count = Math.floor(this.synergyScores.blade * 1.5) + 2; 
+                    for(let i=0; i<count; i++) {
+                        let angle = (Math.PI * 2 / count) * i + gameTime * 2;
+                        arrows.push(new Arrow(this.x, this.y, angle, 700 + this.synergyScores.blade * 20, 100 + this.synergyScores.blade * 10, true, 'synergy_blade')); 
+                    }
+                    soundManager.playShoot();
+                }
+            }
+
+            if (this.synergyScores.tech >= 3) {
+                this.synTechTimer -= dt;
+                if (this.synTechTimer <= 0) {
+                    this.synTechTimer = Math.max(2.0, 5.0 - this.synergyScores.tech * 0.1);
+                    let radius = 150 + this.synergyScores.tech * 20;
+                    shockwaves.push(new Shockwave(this.x, this.y, radius, 80 + this.synergyScores.tech * 10, 'synergy_tech'));
+                    for(let e of enemies) {
+                        if(Math.hypot(e.x-this.x, e.y-this.y) < radius) { e.slowTimer = 2.0 + this.synergyScores.tech * 0.1; e.speedMultiplier = 0.1; }
+                    }
+                    soundManager.playShoot();
+                }
+            }
+
             if (this.maxShield > 0) {
                 if (this.shieldCount < this.maxShield) {
                     this.shieldRegenTimer -= dt;
-                    if (this.shieldRegenTimer <= 0) {
-                        this.shieldCount++;
-                        this.shieldRegenTimer = this.shieldRegenTime;
-                    }
-                } else {
-                    this.shieldRegenTimer = this.shieldRegenTime; 
-                }
+                    if (this.shieldRegenTimer <= 0) { this.shieldCount++; this.shieldRegenTimer = this.shieldRegenTime; }
+                } else { this.shieldRegenTimer = this.shieldRegenTime; }
             }
 
             if (this.hasDeathRay && enemies.length > 0) {
@@ -1021,7 +1182,10 @@
             }
 
             this.fireTimer -= dt;
-            if (this.fireTimer <= 0) { this.shootNearest(currentFireRate); this.fireTimer = this.baseFireCooldown / (currentFireRate * this.cdr); }
+            if (this.fireTimer <= 0) { 
+                this.performBaseAttack(currentFireRate); 
+                this.fireTimer = this.baseFireCooldown / (currentFireRate * this.cdr); 
+            }
 
             if (this.hasShuriken) {
                 this.shurikenTimer -= dt;
@@ -1249,8 +1413,8 @@
                 ctx.beginPath(); ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
                 if (isAwakened) {
                     const pulse = 1 + Math.sin(gameTime * 15) * 0.05; ctx.arc(this.x, this.y, r * pulse, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(217, 4, 41, 0.3)'; ctx.strokeStyle = 'rgba(239, 35, 60, 0.8)'; ctx.lineWidth = 4;
-                } else { ctx.fillStyle = 'rgba(255, 200, 0, 0.2)'; ctx.strokeStyle = 'rgba(255, 200, 0, 0.5)'; ctx.lineWidth = 2; }
+                    ctx.fillStyle = 'rgba(217, 4, 41, 0.05)'; ctx.strokeStyle = 'rgba(239, 35, 60, 0.2)'; ctx.lineWidth = 2;
+                } else { ctx.fillStyle = 'rgba(255, 200, 0, 0.03)'; ctx.strokeStyle = 'rgba(255, 200, 0, 0.1)'; ctx.lineWidth = 1; }
                 ctx.fill(); ctx.stroke();
             }
 
@@ -1258,8 +1422,8 @@
                 for(let i=0; i<this.shieldCount; i++) {
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, this.radius + 15 + i*8, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(0, 245, 212, ${0.8 - i*0.2})`;
-                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = `rgba(0, 245, 212, ${0.6 - i*0.15})`;
+                    ctx.lineWidth = 2;
                     ctx.stroke();
                 }
             }
@@ -1346,17 +1510,45 @@
             ctx.fillStyle = '#0f0'; ctx.fillRect(this.x - hpWidth/2, this.y - this.radius - 20, hpWidth * hpRatio, 5);
         }
 
-        shootNearest(currentFireRate) {
-            if (enemies.length === 0) return; let nearestEnemy = null, minDistance = Infinity;
-            for (let enemy of enemies) { const dist = Math.hypot(enemy.x - this.x, enemy.y - this.y); if (dist < minDistance) { minDistance = dist; nearestEnemy = enemy; } }
+        performBaseAttack(currentFireRate) {
+            if (enemies.length === 0) return; 
+            let nearestEnemy = null, minDistance = Infinity;
+            for (let enemy of enemies) { 
+                const dist = Math.hypot(enemy.x - this.x, enemy.y - this.y); 
+                if (dist < minDistance) { minDistance = dist; nearestEnemy = enemy; } 
+            }
+            
             if (nearestEnemy && minDistance < 600) {
                 const baseAngle = Math.atan2(nearestEnemy.y - this.y, nearestEnemy.x - this.x);
-                const spread = 0.2; const isAwakened = (this.upgrades['multishot'] || 0) >= 5;
-                for(let i = 0; i < this.projectileCount; i++) {
-                    const angleOffset = (i - (this.projectileCount - 1) / 2) * spread;
-                    bullets.push(new Bullet(this.x, this.y, baseAngle + angleOffset, isAwakened ? this.bulletSpeed * 1.5 : this.bulletSpeed, isAwakened ? this.bulletDamage * 2 : this.bulletDamage, isAwakened ? 999 : this.bulletPierce, isAwakened));
+                const spread = 0.2; 
+                
+                if (this.playerClass === 'warrior') {
+                    let slashRadius = 120 + (this.projectileCount * 10);
+                    baseSlashes.push(new BaseSlash(this.x, this.y, baseAngle, slashRadius, this.bulletDamage * 1.5));
+                    soundManager.playShoot();
+                } 
+                else if (this.playerClass === 'mage') {
+                    for(let i = 0; i < this.projectileCount; i++) {
+                        let offsetX = (Math.random() - 0.5) * 80;
+                        let offsetY = (Math.random() - 0.5) * 80;
+                        magicAOEs.push(new MagicAOE(nearestEnemy.x + offsetX, nearestEnemy.y + offsetY, 80, this.bulletDamage * 1.2));
+                    }
+                    soundManager.playShoot();
+                } 
+                else if (this.playerClass === 'archer') {
+                    for(let i = 0; i < this.projectileCount; i++) {
+                        const angleOffset = (i - (this.projectileCount - 1) / 2) * spread;
+                        baseArrows.push(new BaseArrow(this.x, this.y, baseAngle + angleOffset, this.bulletSpeed * 1.5, this.bulletDamage, this.bulletPierce));
+                    }
+                    soundManager.playShoot();
+                } 
+                else if (this.playerClass === 'swordmaster') {
+                    for(let i = 0; i < this.projectileCount; i++) {
+                        const angleOffset = (i - (this.projectileCount - 1) / 2) * spread;
+                        flyingSwords.push(new FlyingSword(this.x, this.y, baseAngle + angleOffset, this.bulletSpeed * 1.2, this.bulletDamage * 1.2, nearestEnemy));
+                    }
+                    soundManager.playShoot();
                 }
-                soundManager.playShoot();
             }
         }
 
@@ -1387,30 +1579,43 @@
     }
 
     class Enemy {
-        constructor(x, y, type = 'normal') {
+        constructor(x, y, type = 'tier1') {
             this.x = x; this.y = y;
             this.type = type;
-            let timeScaling = 1 + (gameTime / 60) * 1.5; 
-            let dmgScaling = 1 + (gameTime / 120);
+            
+            let timeScaling = 1 + (gameTime / 60) * 1.0; 
+            let levelScaling = 1 + (player.level * 0.15); 
+            let hpScale = timeScaling * levelScaling;
+            
+            let dmgScaling = 1 + (gameTime / 120) + (player.level * 0.05);
 
-            if (currentMode === 'hard') { timeScaling = 1 + (gameTime / 60) * 3.0; dmgScaling = 1 + (gameTime / 60); }
+            if (currentMode === 'hard') { hpScale *= 1.5; dmgScaling *= 1.5; }
 
             this.isElite = false; this.isBoss = false; this.isUltimateBoss = false;
+            this.canShoot = false; this.shootTimer = 0; 
 
             if (type === 'ultimate_boss') {
-                this.radius = 80; this.speed = 85; this.hp = 15000 * timeScaling; this.maxHp = this.hp; 
+                this.radius = 80; this.speed = 85; this.hp = 15000 * hpScale; this.maxHp = this.hp; 
                 this.color = '#ef233c'; this.damage = 60 * dmgScaling; this.xpValue = 5000; this.isUltimateBoss = true; this.isBoss = true;
-                this.attackTimer = 2.0;
-            } else if (type === 'fast') {
-                this.radius = 10; this.speed = 180; this.hp = 20 * timeScaling; this.color = '#f72585'; this.damage = 5 * dmgScaling; this.xpValue = 15;
-            } else if (type === 'tank') {
-                this.radius = 25; this.speed = 60; this.hp = 150 * timeScaling; this.color = '#7209b7'; this.damage = 20 * dmgScaling; this.xpValue = 50;
+                
+                this.bossState = 'idle';
+                this.stateTimer = 2.0;
+                this.dashAngle = 0;
+                this.spreadCount = 0;
+                
             } else if (type === 'elite') {
-                this.radius = 20; this.speed = 110; this.hp = 300 * timeScaling; this.color = '#fca311'; this.damage = 25 * dmgScaling; this.xpValue = 100; this.isElite = true;
+                this.radius = 20; this.speed = 110; this.hp = 300 * hpScale; this.color = '#fca311'; this.damage = 25 * dmgScaling; this.xpValue = 100; this.isElite = true;
             } else if (type === 'boss') {
-                this.radius = 50; this.speed = 70; this.hp = 2500 * timeScaling; this.color = '#d90429'; this.damage = 40 * dmgScaling; this.xpValue = 500; this.isBoss = true;
+                this.radius = 50; this.speed = 70; this.hp = 2500 * hpScale; this.color = '#d90429'; this.damage = 40 * dmgScaling; this.xpValue = 500; this.isBoss = true;
+            } else if (type === 'tier4_shooter') {
+                this.radius = 16; this.speed = 70; this.hp = 80 * hpScale; this.color = '#ff5c77'; this.damage = 12 * dmgScaling; this.xpValue = 40;
+                this.canShoot = true; this.shootTimer = 2.0 + Math.random();
+            } else if (type === 'tier3') {
+                this.radius = 26; this.speed = 55; this.hp = 150 * hpScale; this.color = '#7209b7'; this.damage = 25 * dmgScaling; this.xpValue = 30;
+            } else if (type === 'tier2') {
+                this.radius = 12; this.speed = 160; this.hp = 35 * hpScale; this.color = '#4cc9f0'; this.damage = 15 * dmgScaling; this.xpValue = 20;
             } else { 
-                this.radius = 14; this.speed = 100; this.hp = 40 * timeScaling; this.color = '#e63946'; this.damage = 10 * dmgScaling; this.xpValue = 10;
+                this.radius = 14; this.speed = 95; this.hp = 40 * hpScale; this.color = '#8d99ae'; this.damage = 10 * dmgScaling; this.xpValue = 10;
             }
 
             if (currentMode === 'rampage') { this.speed *= 1.4; this.damage *= 1.5; this.hp *= 1.2; this.xpValue = Math.floor(this.xpValue * 1.5); }
@@ -1419,25 +1624,78 @@
         }
 
         update(dt) {
-            if (this.slowTimer > 0) { this.slowTimer -= dt; } else { this.speedMultiplier = 1.0; }
-            const angle = Math.atan2(player.y - this.y, player.x - this.x); const actualSpeed = this.speed * this.speedMultiplier;
-            this.x += Math.cos(angle) * actualSpeed * dt; this.y += Math.sin(angle) * actualSpeed * dt;
-
-            // --- 终极领主特殊攻击：环形弹幕 ---
             if (this.isUltimateBoss) {
-                this.attackTimer -= dt;
-                if (this.attackTimer <= 0) {
-                    this.attackTimer = Math.max(1.5, 3.0 - (gameTime / 300)); // 越来越快
-                    const bulletCount = 16;
-                    for(let i=0; i<bulletCount; i++) {
-                        let bAngle = (Math.PI*2 / bulletCount) * i + (Math.random() * 0.2);
-                        enemyBullets.push(new EnemyBullet(this.x, this.y, bAngle, 250, this.damage * 0.4, 10, '#ffd166'));
+                this.stateTimer -= dt;
+                
+                if (this.bossState === 'idle') {
+                    const angle = Math.atan2(player.y - this.y, player.x - this.x);
+                    this.x += Math.cos(angle) * this.speed * 0.6 * dt;
+                    this.y += Math.sin(angle) * this.speed * 0.6 * dt;
+                    
+                    if (this.stateTimer <= 0) {
+                        const rand = Math.random();
+                        if (rand < 0.35) {
+                            this.bossState = 'nova'; this.stateTimer = 0.5; 
+                        } else if (rand < 0.7) {
+                            this.bossState = 'dash_prep'; this.stateTimer = 1.0; 
+                        } else {
+                            this.bossState = 'spread'; this.stateTimer = 0.2; this.spreadCount = 3; 
+                        }
                     }
-                    soundManager.playShoot();
+                } 
+                else if (this.bossState === 'nova') {
+                    if (this.stateTimer <= 0) {
+                        const bulletCount = 20;
+                        for(let i=0; i<bulletCount; i++) {
+                            enemyBullets.push(new EnemyBullet(this.x, this.y, (Math.PI*2 / bulletCount) * i, 250, this.damage * 0.15, 10, '#ffd166'));
+                        }
+                        soundManager.playShoot();
+                        this.bossState = 'idle'; this.stateTimer = 2.0;
+                    }
+                } 
+                else if (this.bossState === 'dash_prep') {
+                    if (this.stateTimer <= 0) {
+                        this.dashAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                        this.bossState = 'dashing'; this.stateTimer = 0.8;
+                    }
+                } 
+                else if (this.bossState === 'dashing') {
+                    const dashSpeed = this.speed * 5;
+                    this.x += Math.cos(this.dashAngle) * dashSpeed * dt;
+                    this.y += Math.sin(this.dashAngle) * dashSpeed * dt;
+                    if (this.stateTimer <= 0) {
+                        this.bossState = 'idle'; this.stateTimer = 1.5;
+                    }
+                } 
+                else if (this.bossState === 'spread') {
+                    if (this.stateTimer <= 0 && this.spreadCount > 0) {
+                        let bAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                        for(let i=-2; i<=2; i++) {
+                            enemyBullets.push(new EnemyBullet(this.x, this.y, bAngle + i*0.25, 300, this.damage * 0.15, 8, '#ff5c77'));
+                        }
+                        soundManager.playShoot();
+                        this.spreadCount--;
+                        this.stateTimer = 0.4;
+                    } else if (this.spreadCount <= 0) {
+                        this.bossState = 'idle'; this.stateTimer = 1.5;
+                    }
+                }
+            } 
+            else {
+                if (this.slowTimer > 0) { this.slowTimer -= dt; } else { this.speedMultiplier = 1.0; }
+                const angle = Math.atan2(player.y - this.y, player.x - this.x); const actualSpeed = this.speed * this.speedMultiplier;
+                this.x += Math.cos(angle) * actualSpeed * dt; this.y += Math.sin(angle) * actualSpeed * dt;
+
+                if (this.canShoot) {
+                    this.shootTimer -= dt;
+                    if (this.shootTimer <= 0) {
+                        this.shootTimer = 3.0 + Math.random() * 2.0; 
+                        let bAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                        enemyBullets.push(new EnemyBullet(this.x, this.y, bAngle, 300, this.damage * 0.3, 6, '#ff5c77'));
+                    }
                 }
             }
 
-            // --- 角斗场边界限制 ---
             if (ultimateBossArena) {
                 let distToCenter = Math.hypot(this.x - ultimateBossArena.x, this.y - ultimateBossArena.y);
                 if (distToCenter > ultimateBossArena.radius - this.radius) {
@@ -1449,24 +1707,44 @@
 
             if (Math.hypot(player.x - this.x, player.y - this.y) < this.radius + player.radius) {
                 player.takeDamage(this.damage * dt); 
-                this.x -= Math.cos(angle) * 2; this.y -= Math.sin(angle) * 2; 
+                
                 if (player.hasThorns) {
                     const dmgInfo = player.calcDamage(player.thornsDamage);
                     this.takeDamage(dmgInfo.dmg * dt * 5, false); 
+                }
+                
+                if (!this.isUltimateBoss || (this.isUltimateBoss && this.bossState === 'dashing')) {
+                    const angle = Math.atan2(this.y - player.y, this.x - player.x);
+                    this.x += Math.cos(angle) * 2; this.y += Math.sin(angle) * 2; 
                 }
             }
         }
 
         draw() {
             ctx.save(); ctx.translate(this.x, this.y);
+            
             if (this.isUltimateBoss) {
-                // 终极领主特有光环与造型
+                if (this.bossState === 'dash_prep') {
+                    let warningAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(warningAngle) * 1200, Math.sin(warningAngle) * 1200);
+                    ctx.strokeStyle = `rgba(239, 35, 60, ${0.3 + Math.sin(gameTime * 20) * 0.2})`;
+                    ctx.lineWidth = 15;
+                    ctx.stroke();
+                }
+                
                 ctx.rotate(gameTime);
                 ctx.beginPath(); ctx.arc(0, 0, this.radius + 15, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(217, 4, 41, 0.5)'; ctx.lineWidth = 10; ctx.stroke();
                 
                 ctx.rotate(-gameTime * 2);
                 ctx.fillStyle = this.color;
+                
+                if (this.bossState === 'dash_prep' && Math.floor(gameTime * 10) % 2 === 0) {
+                    ctx.fillStyle = '#fff';
+                }
+
                 ctx.beginPath(); ctx.moveTo(0, -this.radius); ctx.lineTo(this.radius, this.radius); ctx.lineTo(-this.radius, this.radius); ctx.fill();
                 ctx.beginPath(); ctx.moveTo(0, this.radius); ctx.lineTo(this.radius, -this.radius); ctx.lineTo(-this.radius, -this.radius); ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
@@ -1484,7 +1762,20 @@
             if (isCrit) { floatingTexts.push(new FloatingText(this.x, this.y, "Crit! " + Math.round(amount), '#ff5c77', true)); soundManager.playCrit(); } 
             else { floatingTexts.push(new FloatingText(this.x, this.y, Math.round(amount), '#fff', false)); soundManager.playHit(); }
             
-            // 终极领主不吃击退
+            if (isCrit && player.synergyScores.blood >= 3) {
+                const triggerChance = Math.min(0.5, player.synergyScores.blood * 0.03); 
+                if (Math.random() < triggerChance) {
+                    effects.push(new Explosion(this.x, this.y, 100 + player.synergyScores.blood * 5, true, 'blood_nova'));
+                    const dmgInfo = player.calcDamage(player.synergyScores.blood * 30); 
+                    for(let e of enemies) { 
+                        if(e !== this && Math.hypot(e.x - this.x, e.y - this.y) < 100 + player.synergyScores.blood * 5) e.takeDamage(dmgInfo.dmg, false); 
+                    }
+                    const healAmt = Math.floor(player.synergyScores.blood / 3) + 1;
+                    player.hp = Math.min(player.maxHp, player.hp + healAmt); 
+                    floatingTexts.push(new FloatingText(player.x, player.y - 20, "+" + healAmt, '#80ed99'));
+                }
+            }
+
             if (!this.isUltimateBoss) {
                 const knockback = this.isBoss ? 0.5 : (this.isElite ? 2 : 5); const angle = Math.atan2(this.y - player.y, this.x - player.x);
                 this.x += Math.cos(angle) * knockback; this.y += Math.sin(angle) * knockback;
@@ -1516,14 +1807,15 @@
     }
 
     const camera = { x: 0, y: 0 };
+    let baseSlashes = []; let magicAOEs = []; let baseArrows = []; let flyingSwords = [];
+    
     let enemies = []; let bullets = []; let boomerangs = []; let missiles = []; let blackHoles = []; let axes = []; let slashes = []; let laserLines = []; let orbitals = []; let shockwaves = []; let meteors = []; let arrows = []; let shurikens = []; let turrets = []; let voidSlashes = [];
     let gems = []; let chests = []; let floatingTexts = []; let effects = []; let damageZones = []; let enemyBullets = [];
     let spawnTimer = 0; let spawnInterval = 1.5; let eliteTimer = 20; let lastBossMinute = 0; let lastUltimateBossMinute = 0;
 
     function saveScore(isWin) {
         let scores = JSON.parse(localStorage.getItem('survivor_leaderboard')) || [];
-        
-        let cName = '战士'; if (selectedClass === 'mage') cName = '法师'; if (selectedClass === 'archer') cName = '射手';
+        let cName = '战士'; if (selectedClass === 'mage') cName = '法师'; if (selectedClass === 'archer') cName = '射手'; if (selectedClass === 'swordmaster') cName = '剑侠';
         let mName = '经典'; if (currentMode === 'rampage') mName = '狂暴'; if (currentMode === 'hard') mName = '困难'; if (currentMode === 'debug') mName = '调试';
 
         scores.push({ time: gameTime, kills: killCount, mode: mName, class: cName, map: mapThemes[selectedMap].name, win: isWin });
@@ -1545,7 +1837,6 @@
     }
     function hideLeaderboard() { leaderboardPanel.style.display = 'none'; startPanel.style.display = 'block'; }
 
-    // GM 控制逻辑
     function gmSetSpawnRate(mult) { 
         gmSpawnRateMult = mult; 
         document.querySelectorAll('.gm-rate-btn').forEach(btn => btn.classList.remove('active-gm-btn'));
@@ -1613,21 +1904,15 @@
     function gmSetLevel(targetLvl) {
         player.level = targetLvl;
         player.xp = 0;
-        
-        // 重新计算该等级需要的经验上限
         player.xpNeeded = 50;
         for(let i = 1; i < targetLvl; i++) {
             if (currentMode === 'rampage' || currentMode === 'hard') { player.xpNeeded = Math.floor(player.xpNeeded * 1.15) + 50; } 
             else { player.xpNeeded = Math.floor(player.xpNeeded * 1.3) + 20; }
         }
-        
         if (targetLvl >= 20) soundManager.playAwaken();
-        
-        // 更新按钮高亮状态
         document.querySelectorAll('.gm-lvl-btn').forEach(btn => btn.classList.remove('active-gm-btn'));
         let activeBtn = document.getElementById(`btn-lvl-${targetLvl}`);
         if (activeBtn) activeBtn.classList.add('active-gm-btn');
-
         updateHUD();
     }
 
@@ -1660,25 +1945,29 @@
         currentMode = mode; resetInput(); 
         player = new Player(selectedClass); 
         
+        // 重置所有实体
         enemies = []; bullets = []; boomerangs = []; missiles = []; blackHoles = []; axes = []; slashes = []; laserLines = []; orbitals = []; shockwaves = []; meteors = []; arrows = []; shurikens = []; turrets = []; voidSlashes = [];
         gems = []; chests = []; floatingTexts = []; effects = []; damageZones = []; enemyBullets = [];
+        baseSlashes = []; magicAOEs = []; baseArrows = []; flyingSwords = []; 
+        
         gameTime = 0; killCount = 0; spawnInterval = 1.5; eliteTimer = 20; lastBossMinute = 0; lastUltimateBossMinute = 0;
-        pendingUpgrades = 0; // 重置升级次数
+        pendingUpgrades = 0; 
         ultimateBossArena = null; activeUltimateBoss = null; bossUi.style.display = 'none';
         
         startPanel.style.display = 'none'; gameoverPanel.style.display = 'none'; levelupPanel.style.display = 'none'; leaderboardPanel.style.display = 'none'; settingsPanel.style.display = 'none'; gmPanel.style.display = 'none';
-        document.getElementById('buff-trigger-btn').style.display = 'none'; // 隐藏小球
+        document.getElementById('buff-trigger-btn').style.display = 'none'; 
         xpContainer.style.display = 'block'; levelText.style.display = 'block'; timerText.style.display = 'block'; settingsBtn.style.display = 'block'; joystickZone.style.display = 'block'; 
         
         if (currentMode === 'debug') gmBtn.style.display = 'block'; else gmBtn.style.display = 'none';
         
+        player.calculateSynergies();
         updateHUD(); gameState = 'playing'; lastTime = performance.now(); soundManager.startBGM(); requestAnimationFrame(gameLoop);
     }
 
     function gameOver(isWin) {
         gameState = 'gameover'; soundManager.stopBGM(); resetInput();
         xpContainer.style.display = 'none'; levelText.style.display = 'none'; timerText.style.display = 'none'; settingsBtn.style.display = 'none'; gmBtn.style.display = 'none'; joystickZone.style.display = 'none'; bossUi.style.display = 'none';
-        
+        synergyHud.style.display = 'none';
         saveScore(isWin); 
         
         if (isWin) {
@@ -1689,10 +1978,45 @@
         }
         
         let modeName = '🌿 经典'; if(currentMode === 'rampage') modeName = '🩸 狂暴'; if(currentMode === 'hard') modeName = '💀 困难'; if(currentMode === 'debug') modeName = '🐛 调试';
-        let className = '🗡️ 战士'; if(selectedClass === 'mage') className = '🧙‍♂️ 法师'; if(selectedClass === 'archer') className = '🏹 射手';
+        let className = '🗡️ 战士'; if(selectedClass === 'mage') className = '🧙‍♂️ 法师'; if(selectedClass === 'archer') className = '🏹 射手'; if(selectedClass === 'swordmaster') className = '⚔️ 剑侠';
 
         finalStats.innerHTML = `职业: ${className}<br>地图: ${mapThemes[selectedMap].name}<br>模式: ${modeName}<br>存活时间: ${formatTime(gameTime)} <br> 击杀数: ${killCount} <br> 最终等级: ${player.level}`;
         gameoverPanel.style.display = 'block';
+    }
+
+    function updateSynergyHUD() {
+        if (!player || !player.synergyScores) { synergyHud.style.display = 'none'; return; }
+        
+        const schools = [
+            { id: 'elemental', icon: '🔥', name: '毁灭元素', desc: '陨石洗地', color: '#ff5c77' },
+            { id: 'blade', icon: '⚔️', name: '极意剑阵', desc: '万剑归宗', color: '#fca311' },
+            { id: 'tech', icon: '⚙️', name: '赛博科技', desc: '电磁瘫痪', color: '#4cc9f0' },
+            { id: 'blood', icon: '🩸', name: '嗜血狂战', desc: '暴击血爆', color: '#ef233c' }
+        ];
+        
+        let html = '<div style="color:#00f5d4; font-weight:bold; margin-bottom:2px; border-bottom:1px solid #4a4e69; padding-bottom:5px; text-align:center;">🌟 激活羁绊</div>';
+        
+        schools.forEach(s => {
+            const score = player.synergyScores[s.id] || 0;
+            if (score >= 3) { 
+                let level = Math.floor((score - 3) / 5) + 1;
+                let nextScore = 3 + level * 5; 
+                
+                html += `
+                <div style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; border-left: 4px solid ${s.color}; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="color:${s.color}; font-weight:bold;">${s.icon} ${s.name}</span>
+                        <span style="color:#fff; font-weight:bold; font-style:italic; font-size:15px; text-shadow: 0 0 5px ${s.color};">Lv.${level}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:12px; align-items:center;">
+                        <span style="color:#ffd166;">${s.desc}</span>
+                        <span style="color:#aaa; background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:4px;">${score}/${nextScore}分</span>
+                    </div>
+                </div>`;
+            }
+        });
+        
+        synergyHud.innerHTML = html;
     }
 
     function updateHUD() {
@@ -1707,22 +2031,28 @@
             timerText.innerText = formatTime(gameTime);
         }
 
-        // 更新视野缩放 (每10级缩放一次，调为0.1系数让缩放更加微小柔和)
         const targetZoom = 1.0 / (1 + Math.floor(player.level / 10) * 0.1); 
-        currentZoom += (targetZoom - currentZoom) * 0.05; // 平滑过渡
+        currentZoom += (targetZoom - currentZoom) * 0.05; 
 
-        // 更新终极BOSS血条
         if (activeUltimateBoss && !activeUltimateBoss.markedForDeletion) {
             bossUi.style.display = 'block';
             bossHpFill.style.width = `${Math.max(0, (activeUltimateBoss.hp / activeUltimateBoss.maxHp) * 100)}%`;
         } else if (activeUltimateBoss && activeUltimateBoss.markedForDeletion) {
             bossUi.style.display = 'none';
-            activeUltimateBoss = null; ultimateBossArena = null; // 解除结界
+            activeUltimateBoss = null; ultimateBossArena = null; 
         }
+
+        let hasActiveSynergy = false;
+        if (player && player.synergyScores) {
+            for(let key in player.synergyScores) {
+                if(player.synergyScores[key] >= 3) hasActiveSynergy = true;
+            }
+        }
+        synergyHud.style.display = (hasActiveSynergy && gameState === 'playing') ? 'flex' : 'none';
     }
 
     function handleSpawning(dt) {
-        spawnTimer -= dt * gmSpawnRateMult; // 应用GM速度倍率
+        spawnTimer -= dt * gmSpawnRateMult; 
         spawnInterval = Math.max(0.2, 1.5 - (gameTime / 60) * 0.4);
         if (currentMode === 'hard') spawnInterval = Math.max(0.1, spawnInterval * 0.7);
 
@@ -1735,20 +2065,20 @@
         
         const currentMinute = Math.floor(gameTime / 60);
         
-        // --- 终极领主触发逻辑 ---
         if ((currentMode === 'hard' || currentMode === 'rampage') && currentMinute > 0 && currentMinute % 5 === 0 && currentMinute > lastUltimateBossMinute) {
             lastUltimateBossMinute = currentMinute;
             
-            // 生成终极BOSS与死亡结界
-            activeUltimateBoss = new Enemy(player.x, player.y - 400, 'ultimate_boss');
-            enemies.push(activeUltimateBoss);
-            ultimateBossArena = { x: player.x, y: player.y, radius: 700 };
+            enemies.forEach(e => {
+                if(!e.isUltimateBoss) e.markedForDeletion = true;
+            });
             
+            activeUltimateBoss = new Enemy(player.x, player.y - 600, 'ultimate_boss');
+            enemies.push(activeUltimateBoss);
+            ultimateBossArena = { x: player.x, y: player.y, radius: 1200 };
             floatingTexts.push(new FloatingText(player.x, player.y - 150, "🚨 终极领主降临！结界已开启！🚨", '#ef233c', true));
             soundManager.playAwaken();
         }
 
-        // 普通小Boss
         if (currentMinute > lastBossMinute && currentMinute % 5 !== 0) {
             lastBossMinute = currentMinute;
             const angle = Math.random() * Math.PI * 2; const dist = Math.max(canvas.width, canvas.height) / 2 + 200; 
@@ -1761,15 +2091,26 @@
             if (currentMode === 'rampage') { baseCount *= 3; spawnInterval = Math.max(0.05, spawnInterval * 0.5); }
             if (currentMode === 'hard') { baseCount = Math.floor(baseCount * 1.5); }
 
-            let spawnCount = Math.floor(baseCount * gmSpawnCountMult); // 应用GM数量倍率
+            let spawnCount = Math.floor(baseCount * gmSpawnCountMult); 
 
             for(let i=0; i<spawnCount; i++) {
                 const angle = Math.random() * Math.PI * 2; 
-                // 根据当前缩放比例动态计算生成距离，防止怪生在脸上
                 const dist = Math.max(canvas.width, canvas.height) / (2 * currentZoom) + 100; 
                 const ex = player.x + Math.cos(angle) * dist; const ey = player.y + Math.sin(angle) * dist;
-                let type = 'normal'; const rand = Math.random();
-                if (gameTime > 30 && rand < 0.2) type = 'fast'; if (gameTime > 60 && rand > 0.9) type = 'tank';
+                
+                let type = 'tier1'; 
+                const rand = Math.random();
+                
+                if (gameTime > 30 || player.level > 5) {
+                    if (rand < 0.3) type = 'tier2'; 
+                }
+                if (gameTime > 90 || player.level > 15) {
+                    if (rand > 0.8) type = 'tier3'; 
+                }
+                if (gameTime > 150 || player.level > 25) {
+                    if (rand > 0.9) type = 'tier4_shooter'; 
+                }
+
                 enemies.push(new Enemy(ex, ey, type));
             }
             spawnTimer = spawnInterval;
@@ -1779,7 +2120,6 @@
         enemies = enemies.filter(e => { const dSq = (e.x - player.x)**2 + (e.y - player.y)**2; return dSq < cleanupDistSq && !e.markedForDeletion; });
     }
 
-    // 核心改动：升级时不再直接暂停，而是点亮小光球
     function triggerLevelUp() {
         pendingUpgrades++;
         const btn = document.getElementById('buff-trigger-btn');
@@ -1788,11 +2128,10 @@
         badge.innerText = pendingUpgrades;
     }
 
-    // 点击小光球后才会弹出面板
     function openUpgradePanel() {
-        if (gameState !== 'playing' && gameState !== 'levelup') return; // 防止在暂停/结算时打开
+        if (gameState !== 'playing' && gameState !== 'levelup') return; 
         
-        gameState = 'levelup'; joystickZone.style.display = 'none'; resetInput();
+        gameState = 'levelup'; joystickZone.style.display = 'none'; resetInput(); synergyHud.style.display = 'none';
         
         const availableUpgrades = possibleUpgrades.filter(u => {
             if ((player.upgrades[u.id] || 0) >= 5) return false;
@@ -1815,12 +2154,23 @@
 
             let lvlText = `<span style="float:right; color:#00f5d4;">新!</span>`;
             if (choice.id === 'fallback_meat') { lvlText = ''; } else if (currentLvl > 0) { lvlText = `<span style="float:right; color:${isNextMax?'#fff':'#ffd166'};">Lv.${currentLvl + 1}${isNextMax?' 满级觉醒!':''}</span>`; }
-            btn.innerHTML = `<strong>${choice.icon} ${choice.name}</strong> ${lvlText}<br><span style="font-size:14px; color:${isNextMax?'#fff':'#aaa'};">${choice.desc}</span>`;
+            
+            let schoolTag = '';
+            if (choice.schoolName) {
+                let tagColor = '#8d99ae';
+                if(choice.schoolId === 'elemental') tagColor = '#d90429';
+                if(choice.schoolId === 'blade') tagColor = '#fca311';
+                if(choice.schoolId === 'tech') tagColor = '#4cc9f0';
+                if(choice.schoolId === 'blood') tagColor = '#ef233c';
+                schoolTag = `<span class="school-tag" style="background-color: ${tagColor};">${choice.schoolName}</span>`;
+            }
+
+            btn.innerHTML = `<strong>${choice.icon} ${choice.name}</strong> ${schoolTag} ${lvlText}<br><span style="font-size:14px; color:${isNextMax?'#fff':'#aaa'};">${choice.desc}</span>`;
             btn.onclick = () => applyUpgrade(choice.id); upgradeOptions.appendChild(btn);
         });
         
         levelupPanel.style.display = 'block';
-        document.getElementById('buff-trigger-btn').style.display = 'none'; // 选buff时暂时隐藏小球
+        document.getElementById('buff-trigger-btn').style.display = 'none'; 
     }
 
     function applyUpgrade(id) {
@@ -1873,16 +2223,17 @@
             case 'movespeed': player.speed *= isMaxLevel ? 1.5 : 1.2; break; 
             case 'maxhp': player.maxHp += isMaxLevel ? 200 : 50; player.hp += isMaxLevel ? 200 : 50; break;
         }
+
+        player.calculateSynergies();
     }
 
     function finishLevelUp() {
-        pendingUpgrades--; // 消耗一次升级机会
+        pendingUpgrades--; 
         if (pendingUpgrades > 0) {
-            // 如果还有剩余的升级机会，直接刷新面板继续选
             openUpgradePanel();
         } else {
-            // 选完了，恢复游戏
             levelupPanel.style.display = 'none'; joystickZone.style.display = 'block';
+            updateSynergyHUD(); 
             lastTime = performance.now(); gameState = 'playing'; requestAnimationFrame(gameLoop);
         }
     }
@@ -1893,7 +2244,6 @@
         ctx.lineWidth = 1; 
         const gridSize = 100;
         
-        // 基于缩放比例扩大渲染范围，防止边缘穿帮
         const viewW = canvas.width / currentZoom;
         const viewH = canvas.height / currentZoom;
         
@@ -1921,14 +2271,12 @@
                         ctx.strokeStyle = (rand > 0.92) ? 'rgba(0, 245, 212, 0.15)' : 'rgba(247, 37, 133, 0.15)'; ctx.lineWidth = 2; ctx.strokeRect(x + 10, y + 10, 80, 80);
                     } else if (rand < 0.15) { ctx.fillStyle = 'rgba(255, 255, 255, 0.03)'; for(let i=0; i<4; i++) ctx.fillRect(x + 15 + i*20, y + 20, 10, 60); }
                 } else if (selectedMap === 'desert') {
-                    // 沙漠：沙丘和仙人掌
                     if (rand > 0.85) {
                         ctx.fillStyle = 'rgba(120, 90, 40, 0.4)'; ctx.beginPath(); ctx.ellipse(x + 50, y + 50, 30, 15, rand*Math.PI, 0, Math.PI*2); ctx.fill();
                     } else if (rand < 0.1) {
                         ctx.fillStyle = '#2b5a32'; ctx.fillRect(x + 45, y + 30, 10, 40); ctx.fillRect(x + 35, y + 45, 10, 15); ctx.fillRect(x + 55, y + 35, 10, 20);
                     }
                 } else if (selectedMap === 'snow') {
-                    // 雪地：冰晶刺和积雪
                     if (rand > 0.85) {
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; ctx.beginPath(); ctx.arc(x + 50, y + 50, 40, 0, Math.PI*2); ctx.fill();
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; ctx.beginPath(); ctx.arc(x + 50, y + 40, 20, 0, Math.PI*2); ctx.fill();
@@ -1956,6 +2304,11 @@
         slashes.forEach(s => s.update(dt)); laserLines.forEach(l => l.update(dt)); orbitals.forEach(o => o.update(dt));
         shockwaves.forEach(sw => sw.update(dt)); meteors.forEach(m => m.update(dt)); arrows.forEach(a => a.update(dt));
         shurikens.forEach(s => s.update(dt)); turrets.forEach(t => t.update(dt)); voidSlashes.forEach(vs => vs.update(dt));
+        
+        // 更新普攻实体
+        baseSlashes.forEach(bs => bs.update(dt)); magicAOEs.forEach(ma => ma.update(dt));
+        baseArrows.forEach(ba => ba.update(dt)); flyingSwords.forEach(fs => fs.update(dt));
+        
         enemies.forEach(e => e.update(dt)); enemyBullets.forEach(eb => eb.update(dt));
         gems.forEach(g => g.update(dt)); chests.forEach(c => c.update(dt)); 
         floatingTexts.forEach(ft => ft.update(dt));
@@ -1971,6 +2324,30 @@
                 }
             }
         }
+        
+        // 普攻碰撞检测 (基础箭矢和飞剑)
+        for (let a of baseArrows) {
+            if (a.markedForDeletion) continue;
+            for (let e of enemies) {
+                if (e.markedForDeletion || a.hitEnemies.has(e)) continue; 
+                if (Math.hypot(a.x - e.x, a.y - e.y) < 15 + e.radius) {
+                    const dmgInfo = player.calcDamage(a.damage); e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit); a.hitEnemies.add(e); a.pierce--;
+                    if (a.pierce <= 0) { a.markedForDeletion = true; break; }
+                }
+            }
+        }
+        
+        for (let f of flyingSwords) {
+            if (f.markedForDeletion) continue;
+            for (let e of enemies) {
+                if (e.markedForDeletion || f.hitEnemies.has(e)) continue; 
+                if (Math.hypot(f.x - e.x, f.y - e.y) < 15 + e.radius) {
+                    const dmgInfo = player.calcDamage(f.damage); e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit); f.hitEnemies.add(e); 
+                    f.markedForDeletion = true; break; 
+                }
+            }
+        }
+
         for (let a of arrows) {
             if (a.markedForDeletion) continue;
             for (let e of enemies) {
@@ -2009,7 +2386,6 @@
             }
         }
 
-        // 处理怪物弹幕打中玩家
         for (let eb of enemyBullets) {
             if (eb.markedForDeletion) continue;
             if (Math.hypot(eb.x - player.x, eb.y - player.y) < eb.radius + player.radius) {
@@ -2023,11 +2399,14 @@
         slashes = slashes.filter(s => !s.markedForDeletion); laserLines = laserLines.filter(l => l.life > 0); orbitals = orbitals.filter(o => !o.markedForDeletion);
         shockwaves = shockwaves.filter(sw => !sw.markedForDeletion); meteors = meteors.filter(m => !m.markedForDeletion); arrows = arrows.filter(a => !a.markedForDeletion);
         shurikens = shurikens.filter(s => !s.markedForDeletion); turrets = turrets.filter(t => !t.markedForDeletion); voidSlashes = voidSlashes.filter(vs => !vs.markedForDeletion);
+        
+        baseSlashes = baseSlashes.filter(bs => !bs.markedForDeletion); magicAOEs = magicAOEs.filter(ma => !ma.markedForDeletion);
+        baseArrows = baseArrows.filter(ba => !ba.markedForDeletion); flyingSwords = flyingSwords.filter(fs => !fs.markedForDeletion);
+        
         enemies = enemies.filter(e => !e.markedForDeletion); gems = gems.filter(g => !g.markedForDeletion); chests = chests.filter(c => !c.markedForDeletion);
         floatingTexts = floatingTexts.filter(ft => ft.life > 0); effects = effects.filter(eff => eff.life > 0); damageZones = damageZones.filter(dz => dz.lifeTime > 0);
         enemyBullets = enemyBullets.filter(eb => !eb.markedForDeletion);
 
-        // 计算带缩放的相机位置
         camera.x = player.x - canvas.width / (2 * currentZoom); 
         camera.y = player.y - canvas.height / (2 * currentZoom);
 
@@ -2040,15 +2419,13 @@
 
         drawMap(); 
         
-        // 绘制终极领主结界
         if (ultimateBossArena) {
             ctx.beginPath();
             ctx.arc(ultimateBossArena.x, ultimateBossArena.y, ultimateBossArena.radius, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(239, 35, 60, ${0.5 + Math.sin(gameTime * 5) * 0.3})`; // 呼吸发光红圈
+            ctx.strokeStyle = `rgba(239, 35, 60, ${0.3 + Math.sin(gameTime * 5) * 0.15})`; 
             ctx.lineWidth = 10;
             ctx.stroke();
-            // 内侧淡红填充
-            ctx.fillStyle = 'rgba(239, 35, 60, 0.05)';
+            ctx.fillStyle = 'rgba(239, 35, 60, 0.02)';
             ctx.fill();
         }
 
@@ -2058,6 +2435,11 @@
         slashes.forEach(s => s.draw()); shockwaves.forEach(sw => sw.draw()); laserLines.forEach(l => l.draw()); meteors.forEach(m => m.draw()); voidSlashes.forEach(vs => vs.draw());
         bullets.forEach(b => b.draw()); arrows.forEach(a => a.draw()); boomerangs.forEach(b => b.draw()); 
         missiles.forEach(m => m.draw()); axes.forEach(a => a.draw()); shurikens.forEach(s => s.draw());
+        
+        // 绘制普攻实体
+        baseSlashes.forEach(bs => bs.draw()); magicAOEs.forEach(ma => ma.draw());
+        baseArrows.forEach(ba => ba.draw()); flyingSwords.forEach(fs => fs.draw());
+
         effects.forEach(eff => eff.draw()); floatingTexts.forEach(ft => ft.draw());
 
         ctx.restore(); 
