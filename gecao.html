@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>割草特工队 - 职业觉醒版</title>
+    <title>割草特工队 - 终极视野与BOSS版</title>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; background-color: #1a1a2e; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; touch-action: none; }
         canvas { display: block; }
@@ -26,20 +26,24 @@
         #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background-color: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; pointer-events: auto; display: none; }
         #joystick-knob { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background-color: rgba(255, 255, 255, 0.6); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
-        .panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(22, 33, 62, 0.95); padding: 30px; border-radius: 15px; border: 3px solid #e94560; text-align: center; display: none; pointer-events: auto; box-shadow: 0 0 30px rgba(0,0,0,0.8); min-width: 320px; max-height: 85vh; overflow-y: auto; }
+        .panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(22, 33, 62, 0.95); padding: 30px; border-radius: 15px; border: 3px solid #e94560; text-align: center; display: none; pointer-events: auto; box-shadow: 0 0 30px rgba(0,0,0,0.8); min-width: 340px; max-height: 85vh; overflow-y: auto; }
         .panel h2 { margin-top: 0; color: #e94560; font-size: 28px; }
         
         .upgrade-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background-color: #0f3460; color: white; border: 2px solid #4a4e69; border-radius: 8px; font-size: 18px; cursor: pointer; transition: all 0.2s; text-align: left; position: relative; overflow: hidden; }
         .upgrade-btn:hover { background-color: #e94560; border-color: white; transform: scale(1.02); }
         .upgrade-btn.max-level-btn { background: linear-gradient(45deg, #d90429, #ff5c77); border-color: #ffd166; animation: pulse-glow 1.5s infinite alternate; }
         
-        /* 专属Buff边框 */
         .upgrade-btn.class-exclusive { border-color: #fca311; background-color: #3b2a1a; }
         
         @keyframes pulse-glow { from { box-shadow: 0 0 5px #ff5c77; } to { box-shadow: 0 0 20px #ffd166; } }
 
+        /* 升级暂存小球特效 */
+        #buff-trigger-btn { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); width: 60px; height: 60px; background: radial-gradient(circle, #00f5d4, #0077b6); border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 20px #00f5d4; display: none; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; pointer-events: auto; animation: float-pulse 2s infinite ease-in-out; z-index: 100; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        #buff-badge { position: absolute; top: -5px; right: -5px; background: #e94560; color: white; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        @keyframes float-pulse { 0% { transform: translateY(-50%) scale(1); box-shadow: 0 0 10px #00f5d4; } 50% { transform: translateY(-50%) scale(1.1); box-shadow: 0 0 30px #00f5d4; } 100% { transform: translateY(-50%) scale(1); box-shadow: 0 0 10px #00f5d4; } }
+
         #start-panel { display: block; }
-        button.action-btn { padding: 12px 20px; font-size: 16px; background-color: #e94560; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 5px; }
+        button.action-btn { padding: 10px 16px; font-size: 14px; background-color: #e94560; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 4px; }
         button.action-btn:hover { background-color: #ff5c77; }
 
         .buff-item { display: flex; align-items: center; justify-content: space-between; background-color: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 5px; margin-bottom: 8px; border-left: 4px solid #00f5d4; }
@@ -48,13 +52,21 @@
         .buff-item-lvl { color: #ffd166; font-weight: bold; }
         .buff-item-lvl.max-text { color: #ef233c; text-shadow: 0 0 5px #ff5c77; }
 
-        /* 职业选择UI */
-        .class-selector { display: flex; justify-content: center; gap: 15px; margin: 15px 0; }
-        .class-card { background: #0f3460; border: 2px solid #4a4e69; padding: 15px; border-radius: 10px; cursor: pointer; transition: 0.2s; width: 80px; }
-        .class-card:hover { transform: translateY(-5px); background: #1a4a80; }
-        .class-card.active { border-color: #fca311; background: #2a1a3a; box-shadow: 0 0 15px #fca311; }
-        .class-icon { font-size: 30px; margin-bottom: 5px; }
-        .class-name { font-weight: bold; font-size: 16px; }
+        .card-selector { display: flex; justify-content: center; gap: 10px; margin: 10px 0 20px 0; flex-wrap: wrap; }
+        .choice-card { background: #0f3460; border: 2px solid #4a4e69; padding: 10px; border-radius: 10px; cursor: pointer; transition: 0.2s; width: 65px; }
+        .choice-card:hover { transform: translateY(-5px); background: #1a4a80; }
+        .choice-card.active { border-color: #fca311; background: #2a1a3a; box-shadow: 0 0 15px #fca311; }
+        .choice-icon { font-size: 24px; margin-bottom: 5px; }
+        .choice-name { font-weight: bold; font-size: 12px; }
+
+        /* GM面板激活按钮高亮 */
+        .active-gm-btn { background-color: #4cc9f0 !important; color: #1a1a2e !important; box-shadow: 0 0 10px rgba(76, 201, 240, 0.8); transform: scale(1.05); }
+
+        /* 终极Boss血条容器 */
+        #boss-ui { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: none; text-align: center; }
+        #boss-name { font-weight: bold; color: #fff; font-size: 18px; text-shadow: 2px 2px 4px #000; margin-bottom: 5px; }
+        #boss-hp-bg { width: 100%; height: 25px; background: rgba(0,0,0,0.7); border: 2px solid #5a1818; border-radius: 10px; overflow: hidden; box-shadow: 0 0 15px #ff0000; }
+        #boss-hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #d90429, #ff5c77); transition: width 0.1s; }
     </style>
 </head>
 <body>
@@ -67,37 +79,49 @@
         </div>
         <div id="level-text" style="display: none;">Lv. 1</div>
         <div id="timer-text" style="display: none;">10:00</div>
+        
+        <div id="boss-ui">
+            <div id="boss-name">💀 终极领主 💀</div>
+            <div id="boss-hp-bg"><div id="boss-hp-fill"></div></div>
+        </div>
+
         <button id="settings-btn" onclick="openSettings()">⚙️ 设置</button>
         <button id="gm-btn" onclick="openGM()">🛠️ GM</button>
+
+        <!-- 升级暂存小球 -->
+        <div id="buff-trigger-btn" onclick="openUpgradePanel()">🎁<div id="buff-badge">1</div></div>
 
         <div id="joystick-zone">
             <div id="joystick-knob"></div>
         </div>
 
         <div id="start-panel" class="panel">
-            <h2>🌿 割草特工队 🌿<br><span style="font-size:16px; color:#ffd166;">职业觉醒版</span></h2>
+            <h2>🌿 割草特工队 🌿<br><span style="font-size:16px; color:#ffd166;">大视野防守版</span></h2>
             
-            <div style="margin-top: 15px; text-align: left; padding-left: 10px; font-weight: bold; color: #00f5d4;">选择特工职业：</div>
-            <div class="class-selector">
-                <div class="class-card active" id="class-warrior" onclick="selectClass('warrior')">
-                    <div class="class-icon">🗡️</div><div class="class-name">战士</div>
-                </div>
-                <div class="class-card" id="class-mage" onclick="selectClass('mage')">
-                    <div class="class-icon">🧙‍♂️</div><div class="class-name">法师</div>
-                </div>
-                <div class="class-card" id="class-archer" onclick="selectClass('archer')">
-                    <div class="class-icon">🏹</div><div class="class-name">射手</div>
-                </div>
+            <div style="text-align: left; padding-left: 10px; font-weight: bold; color: #00f5d4;">特工职业：</div>
+            <div class="card-selector">
+                <div class="choice-card active" id="class-warrior" onclick="selectClass('warrior')"><div class="choice-icon">🗡️</div><div class="choice-name">战士</div></div>
+                <div class="choice-card" id="class-mage" onclick="selectClass('mage')"><div class="choice-icon">🧙‍♂️</div><div class="choice-name">法师</div></div>
+                <div class="choice-card" id="class-archer" onclick="selectClass('archer')"><div class="choice-icon">🏹</div><div class="choice-name">射手</div></div>
+            </div>
+
+            <div style="text-align: left; padding-left: 10px; font-weight: bold; color: #fca311;">作战地图：</div>
+            <div class="card-selector" style="margin-bottom: 15px;">
+                <div class="choice-card active" id="map-classic" onclick="selectMap('classic')"><div class="choice-icon">🌌</div><div class="choice-name">经典</div></div>
+                <div class="choice-card" id="map-city" onclick="selectMap('city')"><div class="choice-icon">🌃</div><div class="choice-name">都市</div></div>
+                <div class="choice-card" id="map-forest" onclick="selectMap('forest')"><div class="choice-icon">🌲</div><div class="choice-name">森林</div></div>
+                <div class="choice-card" id="map-desert" onclick="selectMap('desert')"><div class="choice-icon">🏜️</div><div class="choice-name">沙漠</div></div>
+                <div class="choice-card" id="map-snow" onclick="selectMap('snow')"><div class="choice-icon">❄️</div><div class="choice-name">雪地</div></div>
             </div>
 
             <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                <button class="action-btn" onclick="startGame('classic')">经典模式(10分钟)</button>
-                <button class="action-btn" style="background-color: #7209b7;" onclick="startGame('hard')">困难模式💀</button>
-                <button class="action-btn" style="background-color: #d00000;" onclick="startGame('rampage')">狂暴模式🩸</button>
-                <button class="action-btn" style="background-color: #fca311; color: #1a1a2e;" onclick="startGame('debug')">🐛 调试</button>
+                <button class="action-btn" onclick="startGame('classic')">经典(无领主)</button>
+                <button class="action-btn" style="background-color: #7209b7;" onclick="startGame('hard')">困难💀(含领主)</button>
+                <button class="action-btn" style="background-color: #d00000;" onclick="startGame('rampage')">狂暴🩸(含领主)</button>
+                <button class="action-btn" style="background-color: #fca311; color: #1a1a2e;" onclick="startGame('debug')">🐛 调试控制</button>
             </div>
             <br>
-            <button class="action-btn" style="background-color: #4a4e69; font-size: 14px;" onclick="showLeaderboard()">🏆 排行榜</button>
+            <button class="action-btn" style="background-color: #4a4e69;" onclick="showLeaderboard()">🏆 英雄榜</button>
         </div>
 
         <div id="settings-panel" class="panel">
@@ -113,21 +137,36 @@
 
         <div id="gm-panel" class="panel" style="min-width: 360px; max-width: 90vw;">
             <h2>🛠️ GM 控制台</h2>
-            <div style="margin-bottom: 15px;">
-                <span style="color: #aaa; font-weight: bold;">一键直升：</span>
-                <button class="action-btn" style="padding: 5px 10px; font-size: 14px;" onclick="gmSetLevel(10)">Lv.10</button>
-                <button class="action-btn" style="padding: 5px 10px; font-size: 14px;" onclick="gmSetLevel(20)">Lv.20</button>
-                <button class="action-btn" style="padding: 5px 10px; font-size: 14px;" onclick="gmSetLevel(30)">Lv.30</button>
-                <button class="action-btn" style="padding: 5px 10px; font-size: 14px; background-color: #ffb703; color: #1a1a2e;" onclick="gmSetLevel(40)">Lv.40</button>
+            <div style="margin-bottom: 15px; text-align: left;">
+                <span style="color: #aaa; font-weight: bold; display:block; margin-bottom:5px;">出怪速度：</span>
+                <button id="btn-rate-0.5" class="action-btn gm-rate-btn" style="padding: 4px 8px; font-size: 12px; margin: 2px;" onclick="gmSetSpawnRate(0.5)">x0.5</button>
+                <button id="btn-rate-1" class="action-btn gm-rate-btn active-gm-btn" style="padding: 4px 8px; font-size: 12px; margin: 2px;" onclick="gmSetSpawnRate(1)">x1(默认)</button>
+                <button id="btn-rate-5" class="action-btn gm-rate-btn" style="padding: 4px 8px; font-size: 12px; margin: 2px;" onclick="gmSetSpawnRate(5)">x5速</button>
+                <button id="btn-rate-10" class="action-btn gm-rate-btn" style="padding: 4px 8px; font-size: 12px; margin: 2px;" onclick="gmSetSpawnRate(10)">x10速</button>
             </div>
-            <div id="gm-buff-list" style="max-height: 280px; overflow-y: auto; text-align: left; margin-bottom: 15px; border: 1px solid #4a4e69; padding: 10px; border-radius: 8px;"></div>
+            <div style="margin-bottom: 15px; text-align: left;">
+                <span style="color: #aaa; font-weight: bold; display:block; margin-bottom:5px;">出怪数量：</span>
+                <button id="btn-count-1" class="action-btn gm-count-btn active-gm-btn" style="padding: 4px 8px; font-size: 12px; margin: 2px;" onclick="gmSetSpawnCount(1)">x1(默认)</button>
+                <button id="btn-count-5" class="action-btn gm-count-btn" style="padding: 4px 8px; font-size: 12px; margin: 2px;" onclick="gmSetSpawnCount(5)">x5量</button>
+                <button id="btn-count-10" class="action-btn gm-count-btn" style="padding: 4px 8px; font-size: 12px; margin: 2px;" onclick="gmSetSpawnCount(10)">x10量</button>
+                <button id="btn-count-50" class="action-btn gm-count-btn" style="padding: 4px 8px; font-size: 12px; margin: 2px; background:#d90429;" onclick="gmSetSpawnCount(50)">x50(核爆级)</button>
+            </div>
+            <div style="margin-bottom: 15px; text-align: left;">
+                <span style="color: #aaa; font-weight: bold; display:block; margin-bottom:5px;">强制设定等级(可降级)：</span>
+                <button id="btn-lvl-1" class="action-btn gm-lvl-btn active-gm-btn" style="padding: 5px 8px; font-size: 14px;" onclick="gmSetLevel(1)">Lv.1</button>
+                <button id="btn-lvl-10" class="action-btn gm-lvl-btn" style="padding: 5px 8px; font-size: 14px;" onclick="gmSetLevel(10)">Lv.10</button>
+                <button id="btn-lvl-20" class="action-btn gm-lvl-btn" style="padding: 5px 8px; font-size: 14px;" onclick="gmSetLevel(20)">Lv.20</button>
+                <button id="btn-lvl-30" class="action-btn gm-lvl-btn" style="padding: 5px 8px; font-size: 14px;" onclick="gmSetLevel(30)">Lv.30</button>
+                <button id="btn-lvl-40" class="action-btn gm-lvl-btn" style="padding: 5px 8px; font-size: 14px; background-color: #ffb703; color: #1a1a2e;" onclick="gmSetLevel(40)">Lv.40</button>
+            </div>
+            <div id="gm-buff-list" style="max-height: 150px; overflow-y: auto; text-align: left; margin-bottom: 15px; border: 1px solid #4a4e69; padding: 10px; border-radius: 8px;"></div>
             <button class="action-btn" style="background-color: #4a4e69; width: 100%;" onclick="closeGM()">✅ 完成配置</button>
         </div>
 
         <div id="leaderboard-panel" class="panel">
             <h2>🏆 英雄榜 🏆</h2>
             <table style="width: 100%; color: white; text-align: left; border-collapse: collapse; margin-top: 15px; font-size: 14px;">
-                <thead><tr style="border-bottom: 2px solid #4a4e69;"><th>职业</th><th>模式</th><th>存活时间</th><th>击杀</th></tr></thead>
+                <thead><tr style="border-bottom: 2px solid #4a4e69;"><th>职业/地图</th><th>模式</th><th>时间</th><th>击杀</th></tr></thead>
                 <tbody id="leaderboard-list"></tbody>
             </table>
             <br><button class="action-btn" onclick="hideLeaderboard()">返回主页</button>
@@ -140,7 +179,7 @@
 
         <div id="gameover-panel" class="panel">
             <h2 id="end-title">💀 游戏结束 💀</h2>
-            <p id="final-stats">职业: 战士 <br>存活时间: 00:00 <br> 击杀数: 0</p>
+            <p id="final-stats">职业: 战士 <br>地图: 经典<br>存活时间: 00:00 <br> 击杀数: 0</p>
             <br>
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <button class="action-btn" onclick="startGame(currentMode)">再来一局</button>
@@ -172,15 +211,38 @@
     const finalStats = document.getElementById('final-stats');
     const joystickZone = document.getElementById('joystick-zone');
     const joystickKnob = document.getElementById('joystick-knob');
+    const bossUi = document.getElementById('boss-ui');
+    const bossHpFill = document.getElementById('boss-hp-fill');
 
     let gameState = 'start'; 
     let lastTime = 0; let gameTime = 0; let killCount = 0;
+    let pendingUpgrades = 0; // 新增：记录攒了几次升级机会
     let currentMode = 'classic'; 
-    let selectedClass = 'warrior'; // 当前选择的职业
+    let selectedClass = 'warrior'; 
+    let selectedMap = 'classic'; 
+
+    // --- GM 爆兵控制 ---
+    let gmSpawnRateMult = 1.0;
+    let gmSpawnCountMult = 1.0;
+
+    // --- 动态视野 (Zoom) ---
+    let currentZoom = 1.0;
+
+    // --- 终极领主 & 角斗场 ---
+    let ultimateBossArena = null; // {x, y, radius}
+    let activeUltimateBoss = null;
+
+    // 地图主题配置 (含新增的沙漠、雪地)
+    const mapThemes = {
+        classic: { bg: '#1a1a2e', grid: '#2a2a3e', name: '经典' },
+        city:    { bg: '#0b0c10', grid: '#1f2833', name: '都市' },
+        forest:  { bg: '#0a120d', grid: '#132418', name: '森林' },
+        desert:  { bg: '#4a3b22', grid: '#5c4a2e', name: '沙漠' },
+        snow:    { bg: '#2c3e50', grid: '#34495e', name: '雪地' }
+    };
 
     let joyActive = false; let joyDx = 0, joyDy = 0;
 
-    // --- 输入控制 ---
     function resetInput() {
         joyActive = false; joyDx = 0; joyDy = 0;
         joystickKnob.style.transform = `translate(-50%, -50%)`;
@@ -216,16 +278,20 @@
     joystickZone.addEventListener('touchend', handleJoystickEnd, {passive: false}); joystickZone.addEventListener('touchcancel', handleJoystickEnd, {passive: false});
     joystickZone.addEventListener('mousedown', handleJoystickStart); window.addEventListener('mousemove', handleJoystickMove); window.addEventListener('mouseup', handleJoystickEnd);
 
-    // 职业选择逻辑
     function selectClass(c) {
         selectedClass = c;
-        document.getElementById('class-warrior').className = 'class-card';
-        document.getElementById('class-mage').className = 'class-card';
-        document.getElementById('class-archer').className = 'class-card';
-        document.getElementById(`class-${c}`).className = 'class-card active';
+        ['warrior', 'mage', 'archer'].forEach(id => document.getElementById(`class-${id}`).className = 'choice-card');
+        document.getElementById(`class-${c}`).className = 'choice-card active';
     }
 
-    // 🎧 音效系统
+    function selectMap(m) {
+        selectedMap = m;
+        ['classic', 'city', 'forest', 'desert', 'snow'].forEach(id => document.getElementById(`map-${id}`).className = 'choice-card');
+        document.getElementById(`map-${m}`).className = 'choice-card active';
+        ctx.fillStyle = mapThemes[selectedMap].bg; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const soundManager = {
         bgmInterval: null,
@@ -339,13 +405,32 @@
             if (this.type === 'nuke') ctx.fillStyle = `rgba(57, 255, 20, ${this.life * 3})`;
             else if (this.type === 'ice') ctx.fillStyle = `rgba(0, 191, 255, ${this.life * 3})`;
             else if (this.type === 'poison') ctx.fillStyle = `rgba(181, 23, 158, ${this.life * 3})`;
-            else if (this.type === 'bloom') ctx.fillStyle = `rgba(114, 9, 183, ${this.life * 3})`; // 死亡爆破颜色
+            else if (this.type === 'bloom') ctx.fillStyle = `rgba(114, 9, 183, ${this.life * 3})`; 
             else ctx.fillStyle = `rgba(255, 92, 119, ${this.life * 3})`;
             ctx.fill();
         }
     }
 
-    // --- 新增致敬元气骑士的特效类 ---
+    // Boss 的弹幕
+    class EnemyBullet {
+        constructor(x, y, angle, speed, damage, radius, color) {
+            this.x = x; this.y = y; this.vx = Math.cos(angle)*speed; this.vy = Math.sin(angle)*speed;
+            this.damage = damage; this.radius = radius; this.color = color;
+            this.lifeTime = 4; this.markedForDeletion = false;
+        }
+        update(dt) {
+            this.x += this.vx * dt; this.y += this.vy * dt;
+            this.lifeTime -= dt; if(this.lifeTime <= 0) this.markedForDeletion = true;
+        }
+        draw() {
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+            ctx.fillStyle = this.color; ctx.fill(); 
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.shadowBlur = 10; ctx.shadowColor = this.color;
+            ctx.shadowBlur = 0;
+        }
+    }
+
     class VoidSlash {
         constructor(x, y, angle, radius, damage, isAwakened) {
             this.x = x; this.y = y; this.angle = angle; this.radius = radius; this.damage = damage;
@@ -468,7 +553,6 @@
         }
     }
 
-    // 战士专属：震荡波实体
     class Shockwave {
         constructor(x, y, maxRadius, damage) {
             this.x = x; this.y = y; this.maxRadius = maxRadius; this.radius = 10; this.damage = damage;
@@ -482,7 +566,6 @@
                 if (this.hitEnemies.has(e)) continue;
                 if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
                     e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit); this.hitEnemies.add(e);
-                    // 击退
                     const angle = Math.atan2(e.y - this.y, e.x - this.x); e.x += Math.cos(angle)*30; e.y += Math.sin(angle)*30;
                 }
             }
@@ -493,10 +576,9 @@
         }
     }
 
-    // 法师专属：坠落的陨石
     class Meteor {
         constructor(tx, ty, damage, blastRadius, isAwakened) {
-            this.tx = tx; this.ty = ty; this.x = tx + (Math.random()*200 - 100); this.y = ty - 800; // 从天上掉下来
+            this.tx = tx; this.ty = ty; this.x = tx + (Math.random()*200 - 100); this.y = ty - 800; 
             this.damage = damage; this.blastRadius = isAwakened ? blastRadius * 2 : blastRadius; this.isAwakened = isAwakened;
             this.speed = 1200; this.markedForDeletion = false;
         }
@@ -518,7 +600,6 @@
         }
     }
 
-    // 射手专属：穿云重箭
     class Arrow {
         constructor(x, y, angle, speed, damage, isAwakened) {
             this.x = x; this.y = y; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
@@ -528,13 +609,12 @@
         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifeTime -= dt; if (this.lifeTime <= 0) this.markedForDeletion = true; }
         draw() {
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(Math.atan2(this.vy, this.vx));
-            ctx.fillStyle = this.isAwakened ? '#00f5d4' : '#fff'; ctx.fillRect(-15, -2, 30, 4); // 箭杆
-            ctx.beginPath(); ctx.moveTo(15, -6); ctx.lineTo(25, 0); ctx.lineTo(15, 6); ctx.fillStyle = this.isAwakened ? '#fee440' : '#ef233c'; ctx.fill(); // 箭头
+            ctx.fillStyle = this.isAwakened ? '#00f5d4' : '#fff'; ctx.fillRect(-15, -2, 30, 4); 
+            ctx.beginPath(); ctx.moveTo(15, -6); ctx.lineTo(25, 0); ctx.lineTo(15, 6); ctx.fillStyle = this.isAwakened ? '#fee440' : '#ef233c'; ctx.fill(); 
             ctx.restore();
         }
     }
 
-    // --- 其他武器实体 ---
     class Missile {
         constructor(x, y, damage, blastRadius, isAwakened = false) {
             this.x = x; this.y = y; this.damage = damage; this.blastRadius = isAwakened ? blastRadius * 2.5 : blastRadius;
@@ -742,26 +822,18 @@
         }
     }
 
-    // --- 核心配置库 (包含新增5个致敬元气骑士的强力Buff) ---
     const possibleUpgrades = [
-        // 战士专属
         { id: 'shockwave', name: '震荡波', desc: '[战士专属] 周期性爆开能量环。满级：地震波！', icon: '〰️', classReq: 'warrior' },
         { id: 'berserker', name: '狂战之血', desc: '[战士专属] 血越低，伤害攻速越高。满级：不屈战神！', icon: '🩸', classReq: 'warrior' },
-        // 法师专属
         { id: 'meteor', name: '陨石术', desc: '[法师专属] 召唤陨石轰炸。满级：群星陨落！', icon: '☄️', classReq: 'mage' },
         { id: 'elemental', name: '元素精通', desc: '[法师专属] 大幅增加所有AoE范围。满级：禁咒使！', icon: '🔮', classReq: 'mage' },
-        // 射手专属
         { id: 'arrow', name: '穿云箭', desc: '[射手专属] 极速高穿透巨箭。满级：贯穿天地！', icon: '🏹', classReq: 'archer' },
         { id: 'hawkeye', name: '鹰眼', desc: '[射手专属] 大幅提升暴击和拾取范围。满级：神射手！', icon: '👁️', classReq: 'archer' },
-        
-        // --- 🔥 致敬元气骑士的新增 Buff 🔥 ---
         { id: 'holy_shield', name: '圣骑士护盾', desc: '周期获得护盾，完全免疫一次伤害！满级：叠3层！', icon: '🛡️' },
         { id: 'death_ray', name: '幻影死光', desc: '发射瞬间穿透全屏的极光。满级：毁灭双射线！', icon: '🔫' },
         { id: 'death_bloom', name: '死亡爆破', desc: '击杀敌人概率引发干净的爆炸。满级：必定连爆！', icon: '💥' },
         { id: 'void_slash', name: '虚空斩', desc: '随机在敌人身上撕开次元斩击。满级：全屏剑阵！', icon: '⚔️' },
         { id: 'turret', name: '迷你炮台', desc: '放置一个自动射击的小炮台。满级：等离子机枪！', icon: '🤖' },
-
-        // 其他强力Buff
         { id: 'shuriken', name: '忍者手里剑', desc: '向四周发射穿透飞镖。满级：八方手里剑！', icon: '🥷' },
         { id: 'scythe', name: '死神镰刀', desc: '大范围近战横扫。满级：灵魂收割！', icon: '🌙' },
         { id: 'thorns', name: '反伤刺甲', desc: '受击时反弹伤害，增加护甲。满级：刺猬真身！', icon: '🦔' },
@@ -800,9 +872,8 @@
             this.critChance = 0.0; this.critMultiplier = 1.5; 
             this.xpMultiplier = 1.0; this.lifestealChance = 0.0; this.lifestealAmount = 1;
             this.pickupRange = 80; 
-            this.invincibleTimer = 0; // 无敌帧时间
+            this.invincibleTimer = 0; 
 
-            // 职业属性加成
             if (pClass === 'warrior') {
                 this.maxHp = 150; this.hp = 150; this.speed = 220; this.damageMultiplier = 1.2; this.color = '#e63946';
             } else if (pClass === 'mage') {
@@ -814,14 +885,12 @@
             this.lastDirAngle = 0;
             this.baseFireCooldown = 0.8; this.fireTimer = 0; this.bulletSpeed = 400; this.bulletDamage = 25; this.bulletPierce = 1; this.projectileCount = 1;
             
-            // 元气骑士系列 Buff 状态
             this.shieldCount = 0; this.maxShield = 0; this.shieldRegenTimer = 0; this.shieldRegenTime = 10;
             this.hasDeathRay = false; this.deathRayTimer = 0; this.deathRayCooldown = 4; this.deathRayDamage = 150;
             this.hasDeathBloom = false; this.deathBloomChance = 0; this.deathBloomDamage = 50;
             this.hasVoidSlash = false; this.voidSlashTimer = 0; this.voidSlashCooldown = 2; this.voidSlashDamage = 120; this.voidSlashRadius = 60;
             this.hasTurret = false; this.turretTimer = 0; this.turretCooldown = 6; this.turretDamage = 20;
 
-            // 其他通用/专属武器
             this.hasAura = false; this.auraRadius = 80; this.auraDamage = 10; this.auraTickRate = 0.5; this.auraTimer = 0;
             this.hasLightning = false; this.lightningTimer = 0; this.lightningDamage = 50; this.lightningBaseCooldown = 1.2; this.lightningTargets = 1;
             this.guardianCount = 0; this.guardianAngle = 0;
@@ -872,6 +941,16 @@
 
             this.x += dx * this.speed * dt; this.y += dy * this.speed * dt;
 
+            // --- 角斗场边界限制 ---
+            if (ultimateBossArena) {
+                let distToCenter = Math.hypot(this.x - ultimateBossArena.x, this.y - ultimateBossArena.y);
+                if (distToCenter > ultimateBossArena.radius - this.radius) {
+                    let angle = Math.atan2(this.y - ultimateBossArena.y, this.x - ultimateBossArena.x);
+                    this.x = ultimateBossArena.x + Math.cos(angle) * (ultimateBossArena.radius - this.radius);
+                    this.y = ultimateBossArena.y + Math.sin(angle) * (ultimateBossArena.radius - this.radius);
+                }
+            }
+
             if (this.level >= 20 && (dx !== 0 || dy !== 0)) {
                 this.trail.push({ x: this.x, y: this.y, life: 1.0 }); if (this.trail.length > 15) this.trail.shift();
             }
@@ -880,9 +959,6 @@
             const currentFireRate = this.calcDamage(0).fireRate;
             const aoeBonus = (this.upgrades['elemental']) ? (this.upgrades['elemental'] >= 5 ? 2.0 : 1 + this.upgrades['elemental']*0.15) : 1.0;
 
-            // --- 新增技能逻辑 ---
-
-            // 1. 圣骑士护盾恢复
             if (this.maxShield > 0) {
                 if (this.shieldCount < this.maxShield) {
                     this.shieldRegenTimer -= dt;
@@ -895,44 +971,31 @@
                 }
             }
 
-            // 2. 幻影死光 (Death Ray)
             if (this.hasDeathRay && enemies.length > 0) {
                 this.deathRayTimer -= dt;
                 if (this.deathRayTimer <= 0) {
                     this.deathRayTimer = this.deathRayCooldown / (currentFireRate * this.cdr);
                     const isAwakened = (this.upgrades['death_ray'] || 0) >= 5;
                     const rayCount = isAwakened ? 2 : 1;
-                    
                     for(let i=0; i<rayCount; i++) {
-                        // 找最近的或者随机敌人
                         const target = enemies[Math.floor(Math.random() * enemies.length)];
                         const baseAngle = Math.atan2(target.y - this.y, target.x - this.x);
-                        const angle = baseAngle + (i===1 ? Math.PI/6 : (i===2 ? -Math.PI/6 : 0)); // 散射
-                        
-                        const endX = this.x + Math.cos(angle) * 1500;
-                        const endY = this.y + Math.sin(angle) * 1500;
-                        
+                        const angle = baseAngle + (i===1 ? Math.PI/6 : (i===2 ? -Math.PI/6 : 0)); 
+                        const endX = this.x + Math.cos(angle) * 1500; const endY = this.y + Math.sin(angle) * 1500;
                         laserLines.push(new LaserLine([{x:this.x, y:this.y}, {x:endX, y:endY}], isAwakened));
                         soundManager.playShoot();
-
-                        // 激光碰撞检测
-                        const lineW = isAwakened ? 40 : 20;
-                        const dmgInfo = this.calcDamage(this.deathRayDamage);
+                        const lineW = isAwakened ? 40 : 20; const dmgInfo = this.calcDamage(this.deathRayDamage);
                         for (let e of enemies) {
                             let l2 = (endX - this.x)**2 + (endY - this.y)**2;
                             let t = Math.max(0, Math.min(1, ((e.x - this.x) * (endX - this.x) + (e.y - this.y) * (endY - this.y)) / l2));
-                            let projX = this.x + t * (endX - this.x);
-                            let projY = this.y + t * (endY - this.y);
+                            let projX = this.x + t * (endX - this.x); let projY = this.y + t * (endY - this.y);
                             let distSq = (e.x - projX)**2 + (e.y - projY)**2;
-                            if (distSq < (e.radius + lineW/2)**2) {
-                                e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit);
-                            }
+                            if (distSq < (e.radius + lineW/2)**2) { e.takeDamage(dmgInfo.dmg, dmgInfo.isCrit); }
                         }
                     }
                 }
             }
 
-            // 3. 虚空斩 (Void Slash)
             if (this.hasVoidSlash && enemies.length > 0) {
                 this.voidSlashTimer -= dt;
                 if (this.voidSlashTimer <= 0) {
@@ -948,7 +1011,6 @@
                 }
             }
 
-            // 4. 迷你炮台 (Turret)
             if (this.hasTurret) {
                 this.turretTimer -= dt;
                 if (this.turretTimer <= 0) {
@@ -957,8 +1019,6 @@
                     turrets.push(new Turret(this.x, this.y, this.turretDamage, isAwakened));
                 }
             }
-
-            // --- 原有技能逻辑 ---
 
             this.fireTimer -= dt;
             if (this.fireTimer <= 0) { this.shootNearest(currentFireRate); this.fireTimer = this.baseFireCooldown / (currentFireRate * this.cdr); }
@@ -1194,7 +1254,6 @@
                 ctx.fill(); ctx.stroke();
             }
 
-            // 绘制圣骑士护盾特效
             if (this.shieldCount > 0) {
                 for(let i=0; i<this.shieldCount; i++) {
                     ctx.beginPath();
@@ -1235,7 +1294,6 @@
 
             ctx.save(); ctx.translate(this.x, this.y);
 
-            // 形态绘制
             if (this.level >= 40) {
                 ctx.rotate(gameTime * 0.8);
                 ctx.strokeStyle = '#fca311'; ctx.lineWidth = 2; ctx.setLineDash([15, 10, 5, 10]);
@@ -1316,10 +1374,9 @@
         takeDamage(amount) {
             if (this.invincibleTimer > 0) return;
 
-            // 圣骑士护盾逻辑
             if (this.shieldCount > 0) {
                 this.shieldCount--;
-                this.invincibleTimer = 1.0; // 破盾后获得1秒无敌
+                this.invincibleTimer = 1.0; 
                 soundManager.playShoot(); 
                 return;
             }
@@ -1332,14 +1389,19 @@
     class Enemy {
         constructor(x, y, type = 'normal') {
             this.x = x; this.y = y;
+            this.type = type;
             let timeScaling = 1 + (gameTime / 60) * 1.5; 
             let dmgScaling = 1 + (gameTime / 120);
 
             if (currentMode === 'hard') { timeScaling = 1 + (gameTime / 60) * 3.0; dmgScaling = 1 + (gameTime / 60); }
 
-            this.isElite = false; this.isBoss = false;
+            this.isElite = false; this.isBoss = false; this.isUltimateBoss = false;
 
-            if (type === 'fast') {
+            if (type === 'ultimate_boss') {
+                this.radius = 80; this.speed = 85; this.hp = 15000 * timeScaling; this.maxHp = this.hp; 
+                this.color = '#ef233c'; this.damage = 60 * dmgScaling; this.xpValue = 5000; this.isUltimateBoss = true; this.isBoss = true;
+                this.attackTimer = 2.0;
+            } else if (type === 'fast') {
                 this.radius = 10; this.speed = 180; this.hp = 20 * timeScaling; this.color = '#f72585'; this.damage = 5 * dmgScaling; this.xpValue = 15;
             } else if (type === 'tank') {
                 this.radius = 25; this.speed = 60; this.hp = 150 * timeScaling; this.color = '#7209b7'; this.damage = 20 * dmgScaling; this.xpValue = 50;
@@ -1361,6 +1423,30 @@
             const angle = Math.atan2(player.y - this.y, player.x - this.x); const actualSpeed = this.speed * this.speedMultiplier;
             this.x += Math.cos(angle) * actualSpeed * dt; this.y += Math.sin(angle) * actualSpeed * dt;
 
+            // --- 终极领主特殊攻击：环形弹幕 ---
+            if (this.isUltimateBoss) {
+                this.attackTimer -= dt;
+                if (this.attackTimer <= 0) {
+                    this.attackTimer = Math.max(1.5, 3.0 - (gameTime / 300)); // 越来越快
+                    const bulletCount = 16;
+                    for(let i=0; i<bulletCount; i++) {
+                        let bAngle = (Math.PI*2 / bulletCount) * i + (Math.random() * 0.2);
+                        enemyBullets.push(new EnemyBullet(this.x, this.y, bAngle, 250, this.damage * 0.4, 10, '#ffd166'));
+                    }
+                    soundManager.playShoot();
+                }
+            }
+
+            // --- 角斗场边界限制 ---
+            if (ultimateBossArena) {
+                let distToCenter = Math.hypot(this.x - ultimateBossArena.x, this.y - ultimateBossArena.y);
+                if (distToCenter > ultimateBossArena.radius - this.radius) {
+                    let arenaAngle = Math.atan2(this.y - ultimateBossArena.y, this.x - ultimateBossArena.x);
+                    this.x = ultimateBossArena.x + Math.cos(arenaAngle) * (ultimateBossArena.radius - this.radius);
+                    this.y = ultimateBossArena.y + Math.sin(arenaAngle) * (ultimateBossArena.radius - this.radius);
+                }
+            }
+
             if (Math.hypot(player.x - this.x, player.y - this.y) < this.radius + player.radius) {
                 player.takeDamage(this.damage * dt); 
                 this.x -= Math.cos(angle) * 2; this.y -= Math.sin(angle) * 2; 
@@ -1372,10 +1458,25 @@
         }
 
         draw() {
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.color; ctx.fill(); ctx.strokeStyle = '#2b2d42'; ctx.lineWidth = 2; ctx.stroke();
-            if (this.slowTimer > 0) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0, 191, 255, 0.4)'; ctx.fill(); }
-            if (this.isPlagued) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(114, 9, 183, 0.4)'; ctx.fill(); }
+            ctx.save(); ctx.translate(this.x, this.y);
+            if (this.isUltimateBoss) {
+                // 终极领主特有光环与造型
+                ctx.rotate(gameTime);
+                ctx.beginPath(); ctx.arc(0, 0, this.radius + 15, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(217, 4, 41, 0.5)'; ctx.lineWidth = 10; ctx.stroke();
+                
+                ctx.rotate(-gameTime * 2);
+                ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.moveTo(0, -this.radius); ctx.lineTo(this.radius, this.radius); ctx.lineTo(-this.radius, this.radius); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(0, this.radius); ctx.lineTo(this.radius, -this.radius); ctx.lineTo(-this.radius, -this.radius); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+            } else {
+                ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.fill(); ctx.strokeStyle = '#2b2d42'; ctx.lineWidth = 2; ctx.stroke();
+            }
+            if (this.slowTimer > 0) { ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0, 191, 255, 0.4)'; ctx.fill(); }
+            if (this.isPlagued) { ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(114, 9, 183, 0.4)'; ctx.fill(); }
+            ctx.restore();
         }
 
         takeDamage(amount, isCrit = false) {
@@ -1383,8 +1484,11 @@
             if (isCrit) { floatingTexts.push(new FloatingText(this.x, this.y, "Crit! " + Math.round(amount), '#ff5c77', true)); soundManager.playCrit(); } 
             else { floatingTexts.push(new FloatingText(this.x, this.y, Math.round(amount), '#fff', false)); soundManager.playHit(); }
             
-            const knockback = this.isBoss ? 0.5 : (this.isElite ? 2 : 5); const angle = Math.atan2(this.y - player.y, this.x - player.x);
-            this.x += Math.cos(angle) * knockback; this.y += Math.sin(angle) * knockback;
+            // 终极领主不吃击退
+            if (!this.isUltimateBoss) {
+                const knockback = this.isBoss ? 0.5 : (this.isElite ? 2 : 5); const angle = Math.atan2(this.y - player.y, this.x - player.x);
+                this.x += Math.cos(angle) * knockback; this.y += Math.sin(angle) * knockback;
+            }
 
             if (this.hp <= 0 && !this.markedForDeletion) {
                 this.markedForDeletion = true; killCount++;
@@ -1394,14 +1498,16 @@
                     floatingTexts.push(new FloatingText(player.x, player.y - 20, "+" + player.lifestealAmount, '#80ed99'));
                 }
 
-                // 死亡爆破 (Death Bloom)
                 if (player.hasDeathBloom && Math.random() < player.deathBloomChance) {
                     effects.push(new Explosion(this.x, this.y, 80, player.upgrades['death_bloom'] >= 5, 'bloom'));
                     const dmgInfo = player.calcDamage(player.deathBloomDamage);
                     for(let e of enemies) { if(e !== this && Math.hypot(e.x - this.x, e.y - this.y) < 80) e.takeDamage(dmgInfo.dmg, false); }
                 }
                 
-                if (this.isElite || this.isBoss) {
+                if (this.isUltimateBoss) {
+                    for(let i=0; i<5; i++) chests.push(new Chest(this.x + Math.random()*100-50, this.y + Math.random()*100-50));
+                    for(let i=0; i<30; i++) gems.push(new Gem(this.x + Math.random()*200-100, this.y + Math.random()*200-100, 100));
+                } else if (this.isElite || this.isBoss) {
                     chests.push(new Chest(this.x, this.y));
                     if (this.isBoss) { for(let i=0; i<10; i++) gems.push(new Gem(this.x + Math.random()*60-30, this.y + Math.random()*60-30, 50)); }
                 } else { gems.push(new Gem(this.x, this.y, this.xpValue)); }
@@ -1409,26 +1515,18 @@
         }
     }
 
-    // --- 游戏循环与系统逻辑 ---
-
     const camera = { x: 0, y: 0 };
     let enemies = []; let bullets = []; let boomerangs = []; let missiles = []; let blackHoles = []; let axes = []; let slashes = []; let laserLines = []; let orbitals = []; let shockwaves = []; let meteors = []; let arrows = []; let shurikens = []; let turrets = []; let voidSlashes = [];
-    let gems = []; let chests = []; let floatingTexts = []; let effects = []; let damageZones = []; 
-    let spawnTimer = 0; let spawnInterval = 1.5; let eliteTimer = 20; let lastBossMinute = 0; 
+    let gems = []; let chests = []; let floatingTexts = []; let effects = []; let damageZones = []; let enemyBullets = [];
+    let spawnTimer = 0; let spawnInterval = 1.5; let eliteTimer = 20; let lastBossMinute = 0; let lastUltimateBossMinute = 0;
 
     function saveScore(isWin) {
         let scores = JSON.parse(localStorage.getItem('survivor_leaderboard')) || [];
         
-        let cName = '战士';
-        if (selectedClass === 'mage') cName = '法师';
-        if (selectedClass === 'archer') cName = '射手';
-        
-        let mName = '经典';
-        if (currentMode === 'rampage') mName = '狂暴';
-        if (currentMode === 'hard') mName = '困难';
-        if (currentMode === 'debug') mName = '调试';
+        let cName = '战士'; if (selectedClass === 'mage') cName = '法师'; if (selectedClass === 'archer') cName = '射手';
+        let mName = '经典'; if (currentMode === 'rampage') mName = '狂暴'; if (currentMode === 'hard') mName = '困难'; if (currentMode === 'debug') mName = '调试';
 
-        scores.push({ time: gameTime, kills: killCount, mode: mName, class: cName, win: isWin });
+        scores.push({ time: gameTime, kills: killCount, mode: mName, class: cName, map: mapThemes[selectedMap].name, win: isWin });
         scores.sort((a, b) => b.time - a.time || b.kills - a.kills); scores = scores.slice(0, 8);
         localStorage.setItem('survivor_leaderboard', JSON.stringify(scores));
     }
@@ -1439,12 +1537,26 @@
         if (scores.length === 0) { list.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">暂无记录</td></tr>'; return; }
         list.innerHTML = scores.map((s, index) => `
             <tr style="border-bottom: 1px solid #4a4e69; line-height: 2.5;">
-                <td>#${index + 1} ${s.class}</td><td style="color: ${s.mode === '狂暴' ? '#ff5c77' : (s.mode==='困难'?'#9b5de5':'#00f5d4')}">${s.mode} ${s.win?'👑':''}</td>
+                <td>#${index + 1} ${s.class}<br><span style="font-size:12px;color:#aaa">${s.map || '经典'}</span></td>
+                <td style="color: ${s.mode === '狂暴' ? '#ff5c77' : (s.mode==='困难'?'#9b5de5':'#00f5d4')}">${s.mode} ${s.win?'👑':''}</td>
                 <td>${formatTime(s.time)}</td><td>${s.kills}</td>
             </tr>
         `).join('');
     }
     function hideLeaderboard() { leaderboardPanel.style.display = 'none'; startPanel.style.display = 'block'; }
+
+    // GM 控制逻辑
+    function gmSetSpawnRate(mult) { 
+        gmSpawnRateMult = mult; 
+        document.querySelectorAll('.gm-rate-btn').forEach(btn => btn.classList.remove('active-gm-btn'));
+        document.getElementById(`btn-rate-${mult}`).classList.add('active-gm-btn');
+    }
+    
+    function gmSetSpawnCount(mult) { 
+        gmSpawnCountMult = mult; 
+        document.querySelectorAll('.gm-count-btn').forEach(btn => btn.classList.remove('active-gm-btn'));
+        document.getElementById(`btn-count-${mult}`).classList.add('active-gm-btn');
+    }
 
     function openGM() {
         if(gameState !== 'playing') return;
@@ -1487,27 +1599,35 @@
         if (tempUpgrades[id] <= 0) delete tempUpgrades[id];
 
         let newPlayer = new Player(player.playerClass);
-        newPlayer.level = player.level;
-        newPlayer.xp = player.xp;
-        newPlayer.xpNeeded = player.xpNeeded;
-        newPlayer.trail = player.trail;
-        
+        newPlayer.level = player.level; newPlayer.xp = player.xp; newPlayer.xpNeeded = player.xpNeeded; newPlayer.trail = player.trail;
         player = newPlayer;
 
         for(let key in tempUpgrades) {
             let lvl = tempUpgrades[key];
             for(let i=0; i<lvl; i++) { grantBuffLogic(key); }
         }
-
         player.hp = player.maxHp * hpPercent;
         renderGMList(); updateHUD(); 
     }
 
     function gmSetLevel(targetLvl) {
-        while(player.level < targetLvl) {
-            player.level++;
-            if (player.level === 20 || player.level === 30 || player.level === 40) soundManager.playAwaken();
+        player.level = targetLvl;
+        player.xp = 0;
+        
+        // 重新计算该等级需要的经验上限
+        player.xpNeeded = 50;
+        for(let i = 1; i < targetLvl; i++) {
+            if (currentMode === 'rampage' || currentMode === 'hard') { player.xpNeeded = Math.floor(player.xpNeeded * 1.15) + 50; } 
+            else { player.xpNeeded = Math.floor(player.xpNeeded * 1.3) + 20; }
         }
+        
+        if (targetLvl >= 20) soundManager.playAwaken();
+        
+        // 更新按钮高亮状态
+        document.querySelectorAll('.gm-lvl-btn').forEach(btn => btn.classList.remove('active-gm-btn'));
+        let activeBtn = document.getElementById(`btn-lvl-${targetLvl}`);
+        if (activeBtn) activeBtn.classList.add('active-gm-btn');
+
         updateHUD();
     }
 
@@ -1541,9 +1661,13 @@
         player = new Player(selectedClass); 
         
         enemies = []; bullets = []; boomerangs = []; missiles = []; blackHoles = []; axes = []; slashes = []; laserLines = []; orbitals = []; shockwaves = []; meteors = []; arrows = []; shurikens = []; turrets = []; voidSlashes = [];
-        gems = []; chests = []; floatingTexts = []; effects = []; damageZones = [];
-        gameTime = 0; killCount = 0; spawnInterval = 1.5; eliteTimer = 20; lastBossMinute = 0;
+        gems = []; chests = []; floatingTexts = []; effects = []; damageZones = []; enemyBullets = [];
+        gameTime = 0; killCount = 0; spawnInterval = 1.5; eliteTimer = 20; lastBossMinute = 0; lastUltimateBossMinute = 0;
+        pendingUpgrades = 0; // 重置升级次数
+        ultimateBossArena = null; activeUltimateBoss = null; bossUi.style.display = 'none';
+        
         startPanel.style.display = 'none'; gameoverPanel.style.display = 'none'; levelupPanel.style.display = 'none'; leaderboardPanel.style.display = 'none'; settingsPanel.style.display = 'none'; gmPanel.style.display = 'none';
+        document.getElementById('buff-trigger-btn').style.display = 'none'; // 隐藏小球
         xpContainer.style.display = 'block'; levelText.style.display = 'block'; timerText.style.display = 'block'; settingsBtn.style.display = 'block'; joystickZone.style.display = 'block'; 
         
         if (currentMode === 'debug') gmBtn.style.display = 'block'; else gmBtn.style.display = 'none';
@@ -1553,7 +1677,7 @@
 
     function gameOver(isWin) {
         gameState = 'gameover'; soundManager.stopBGM(); resetInput();
-        xpContainer.style.display = 'none'; levelText.style.display = 'none'; timerText.style.display = 'none'; settingsBtn.style.display = 'none'; gmBtn.style.display = 'none'; joystickZone.style.display = 'none'; 
+        xpContainer.style.display = 'none'; levelText.style.display = 'none'; timerText.style.display = 'none'; settingsBtn.style.display = 'none'; gmBtn.style.display = 'none'; joystickZone.style.display = 'none'; bossUi.style.display = 'none';
         
         saveScore(isWin); 
         
@@ -1564,17 +1688,10 @@
             endTitle.innerText = "💀 游戏结束 💀"; endTitle.style.color = "#e94560";
         }
         
-        let modeName = '🌿 经典';
-        if(currentMode === 'rampage') modeName = '🩸 狂暴';
-        if(currentMode === 'hard') modeName = '💀 困难';
-        if(currentMode === 'debug') modeName = '🐛 调试';
-        
-        let className = '🗡️ 战士';
-        if(selectedClass === 'mage') className = '🧙‍♂️ 法师';
-        if(selectedClass === 'archer') className = '🏹 射手';
+        let modeName = '🌿 经典'; if(currentMode === 'rampage') modeName = '🩸 狂暴'; if(currentMode === 'hard') modeName = '💀 困难'; if(currentMode === 'debug') modeName = '🐛 调试';
+        let className = '🗡️ 战士'; if(selectedClass === 'mage') className = '🧙‍♂️ 法师'; if(selectedClass === 'archer') className = '🏹 射手';
 
-        finalStats.innerHTML = `职业: ${className}<br>模式: ${modeName}<br>存活时间: ${formatTime(gameTime)} <br> 击杀数: ${killCount} <br> 最终等级: ${player.level}`;
-        
+        finalStats.innerHTML = `职业: ${className}<br>地图: ${mapThemes[selectedMap].name}<br>模式: ${modeName}<br>存活时间: ${formatTime(gameTime)} <br> 击杀数: ${killCount} <br> 最终等级: ${player.level}`;
         gameoverPanel.style.display = 'block';
     }
 
@@ -1589,32 +1706,67 @@
         } else {
             timerText.innerText = formatTime(gameTime);
         }
+
+        // 更新视野缩放 (每10级缩放一次，调为0.1系数让缩放更加微小柔和)
+        const targetZoom = 1.0 / (1 + Math.floor(player.level / 10) * 0.1); 
+        currentZoom += (targetZoom - currentZoom) * 0.05; // 平滑过渡
+
+        // 更新终极BOSS血条
+        if (activeUltimateBoss && !activeUltimateBoss.markedForDeletion) {
+            bossUi.style.display = 'block';
+            bossHpFill.style.width = `${Math.max(0, (activeUltimateBoss.hp / activeUltimateBoss.maxHp) * 100)}%`;
+        } else if (activeUltimateBoss && activeUltimateBoss.markedForDeletion) {
+            bossUi.style.display = 'none';
+            activeUltimateBoss = null; ultimateBossArena = null; // 解除结界
+        }
     }
 
     function handleSpawning(dt) {
-        spawnTimer -= dt; spawnInterval = Math.max(0.2, 1.5 - (gameTime / 60) * 0.4);
+        spawnTimer -= dt * gmSpawnRateMult; // 应用GM速度倍率
+        spawnInterval = Math.max(0.2, 1.5 - (gameTime / 60) * 0.4);
         if (currentMode === 'hard') spawnInterval = Math.max(0.1, spawnInterval * 0.7);
 
-        eliteTimer -= dt;
+        eliteTimer -= dt * gmSpawnRateMult;
         if (eliteTimer <= 0) {
             eliteTimer = (currentMode === 'hard') ? (15 + Math.random()*15) : (20 + Math.random() * 20);
             const angle = Math.random() * Math.PI * 2; const dist = Math.max(canvas.width, canvas.height) / 2 + 150; 
             const ex = player.x + Math.cos(angle) * dist; const ey = player.y + Math.sin(angle) * dist; enemies.push(new Enemy(ex, ey, 'elite'));
         }
+        
         const currentMinute = Math.floor(gameTime / 60);
-        if (currentMinute > lastBossMinute) {
+        
+        // --- 终极领主触发逻辑 ---
+        if ((currentMode === 'hard' || currentMode === 'rampage') && currentMinute > 0 && currentMinute % 5 === 0 && currentMinute > lastUltimateBossMinute) {
+            lastUltimateBossMinute = currentMinute;
+            
+            // 生成终极BOSS与死亡结界
+            activeUltimateBoss = new Enemy(player.x, player.y - 400, 'ultimate_boss');
+            enemies.push(activeUltimateBoss);
+            ultimateBossArena = { x: player.x, y: player.y, radius: 700 };
+            
+            floatingTexts.push(new FloatingText(player.x, player.y - 150, "🚨 终极领主降临！结界已开启！🚨", '#ef233c', true));
+            soundManager.playAwaken();
+        }
+
+        // 普通小Boss
+        if (currentMinute > lastBossMinute && currentMinute % 5 !== 0) {
             lastBossMinute = currentMinute;
             const angle = Math.random() * Math.PI * 2; const dist = Math.max(canvas.width, canvas.height) / 2 + 200; 
             const ex = player.x + Math.cos(angle) * dist; const ey = player.y + Math.sin(angle) * dist; enemies.push(new Enemy(ex, ey, 'boss'));
-            floatingTexts.push(new FloatingText(player.x, player.y - 100, "⚠️ BOSS 降临！⚠️", '#ef233c', true));
+            floatingTexts.push(new FloatingText(player.x, player.y - 100, "⚠️ 狂暴个体出现 ⚠️", '#fca311', true));
         }
+
         if (spawnTimer <= 0) {
-            let spawnCount = Math.floor(1 + gameTime / 30); 
-            if (currentMode === 'rampage') { spawnCount *= 3; spawnInterval = Math.max(0.05, spawnInterval * 0.5); }
-            if (currentMode === 'hard') { spawnCount = Math.floor(spawnCount * 1.5); }
+            let baseCount = Math.floor(1 + gameTime / 30); 
+            if (currentMode === 'rampage') { baseCount *= 3; spawnInterval = Math.max(0.05, spawnInterval * 0.5); }
+            if (currentMode === 'hard') { baseCount = Math.floor(baseCount * 1.5); }
+
+            let spawnCount = Math.floor(baseCount * gmSpawnCountMult); // 应用GM数量倍率
 
             for(let i=0; i<spawnCount; i++) {
-                const angle = Math.random() * Math.PI * 2; const dist = Math.max(canvas.width, canvas.height) / 2 + 100; 
+                const angle = Math.random() * Math.PI * 2; 
+                // 根据当前缩放比例动态计算生成距离，防止怪生在脸上
+                const dist = Math.max(canvas.width, canvas.height) / (2 * currentZoom) + 100; 
                 const ex = player.x + Math.cos(angle) * dist; const ey = player.y + Math.sin(angle) * dist;
                 let type = 'normal'; const rand = Math.random();
                 if (gameTime > 30 && rand < 0.2) type = 'fast'; if (gameTime > 60 && rand > 0.9) type = 'tank';
@@ -1622,11 +1774,24 @@
             }
             spawnTimer = spawnInterval;
         }
-        const cleanupDistSq = (Math.max(canvas.width, canvas.height) + 500) ** 2;
+        
+        const cleanupDistSq = (Math.max(canvas.width, canvas.height) / currentZoom + 500) ** 2;
         enemies = enemies.filter(e => { const dSq = (e.x - player.x)**2 + (e.y - player.y)**2; return dSq < cleanupDistSq && !e.markedForDeletion; });
     }
 
+    // 核心改动：升级时不再直接暂停，而是点亮小光球
     function triggerLevelUp() {
+        pendingUpgrades++;
+        const btn = document.getElementById('buff-trigger-btn');
+        const badge = document.getElementById('buff-badge');
+        btn.style.display = 'flex';
+        badge.innerText = pendingUpgrades;
+    }
+
+    // 点击小光球后才会弹出面板
+    function openUpgradePanel() {
+        if (gameState !== 'playing' && gameState !== 'levelup') return; // 防止在暂停/结算时打开
+        
         gameState = 'levelup'; joystickZone.style.display = 'none'; resetInput();
         
         const availableUpgrades = possibleUpgrades.filter(u => {
@@ -1653,7 +1818,9 @@
             btn.innerHTML = `<strong>${choice.icon} ${choice.name}</strong> ${lvlText}<br><span style="font-size:14px; color:${isNextMax?'#fff':'#aaa'};">${choice.desc}</span>`;
             btn.onclick = () => applyUpgrade(choice.id); upgradeOptions.appendChild(btn);
         });
+        
         levelupPanel.style.display = 'block';
+        document.getElementById('buff-trigger-btn').style.display = 'none'; // 选buff时暂时隐藏小球
     }
 
     function applyUpgrade(id) {
@@ -1669,83 +1836,38 @@
         player.upgrades[id]++; const isMaxLevel = player.upgrades[id] === 5; 
 
         switch(id) {
-            // --- 致敬元气的新增技能 ---
-            case 'holy_shield':
-                player.maxShield = isMaxLevel ? 3 : 1; 
-                player.shieldRegenTime = Math.max(2, 10 - player.upgrades['holy_shield'] * 1.5);
-                if(isMaxLevel) soundManager.playAwaken(); break;
-            case 'death_ray':
-                if(!player.hasDeathRay) player.hasDeathRay = true; else { player.deathRayCooldown = Math.max(1, player.deathRayCooldown - 0.5); player.deathRayDamage += 40; }
-                if(isMaxLevel) { player.deathRayDamage *= 2; soundManager.playAwaken(); } break;
-            case 'death_bloom':
-                if(!player.hasDeathBloom) player.hasDeathBloom = true; player.deathBloomChance += isMaxLevel ? 0.5 : 0.1; player.deathBloomDamage += 20;
-                if(isMaxLevel) soundManager.playAwaken(); break;
-            case 'void_slash':
-                if(!player.hasVoidSlash) player.hasVoidSlash = true; else { player.voidSlashCooldown = Math.max(0.5, player.voidSlashCooldown - 0.3); player.voidSlashDamage += 40; }
-                if(isMaxLevel) { player.voidSlashRadius *= 1.5; soundManager.playAwaken(); } break;
-            case 'turret':
-                if(!player.hasTurret) player.hasTurret = true; else { player.turretCooldown = Math.max(2, player.turretCooldown - 1); player.turretDamage += 10; }
-                if(isMaxLevel) soundManager.playAwaken(); break;
-
-            // --- 原有技能 ---
-            case 'shuriken':
-                if(!player.hasShuriken) player.hasShuriken = true; else { player.shurikenCooldown = Math.max(0.5, player.shurikenCooldown - 0.2); player.shurikenDamage += 20; player.shurikenCount += 1; }
-                if(isMaxLevel) { player.shurikenCount = 8; player.shurikenDamage *= 2; soundManager.playAwaken(); } break;
-            case 'scythe':
-                if(!player.hasScythe) player.hasScythe = true; else { player.scytheCooldown = Math.max(0.8, player.scytheCooldown - 0.2); player.scytheDamage += 30; player.scytheRadius += 10; }
-                if(isMaxLevel) { player.scytheRadius += 50; player.scytheDamage *= 2; soundManager.playAwaken(); } break;
-            case 'thorns':
-                if(!player.hasThorns) player.hasThorns = true; else { player.thornsDamage += 20; }
-                if(isMaxLevel) { player.thornsDamage *= 2.5; soundManager.playAwaken(); } break;
-            case 'haste':
-                player.cdr += isMaxLevel ? 0.5 : 0.15; 
-                if(isMaxLevel) soundManager.playAwaken(); break;
-            case 'shockwave':
-                if(!player.hasShockwave) player.hasShockwave = true; else { player.shockwaveCooldown = Math.max(1.0, player.shockwaveCooldown - 0.4); player.shockwaveDamage += 20; player.shockwaveRadius += 20;}
-                if(isMaxLevel) { player.shockwaveRadius += 100; player.shockwaveDamage *= 2; soundManager.playAwaken(); } break;
-            case 'meteor':
-                if(!player.hasMeteor) player.hasMeteor = true; else { player.meteorCooldown = Math.max(2.0, player.meteorCooldown - 0.6); player.meteorDamage += 50; player.meteorRadius += 20; }
-                if(isMaxLevel) { player.meteorCount += 2; player.meteorDamage *= 2; soundManager.playAwaken(); } break;
-            case 'arrow':
-                if(!player.hasArrow) player.hasArrow = true; else { player.arrowCooldown = Math.max(0.5, player.arrowCooldown - 0.2); player.arrowDamage += 30; }
-                if(isMaxLevel) { player.arrowDamage *= 2; soundManager.playAwaken(); } break; 
+            case 'holy_shield': player.maxShield = isMaxLevel ? 3 : 1; player.shieldRegenTime = Math.max(2, 10 - player.upgrades['holy_shield'] * 1.5); if(isMaxLevel) soundManager.playAwaken(); break;
+            case 'death_ray': if(!player.hasDeathRay) player.hasDeathRay = true; else { player.deathRayCooldown = Math.max(1, player.deathRayCooldown - 0.5); player.deathRayDamage += 40; } if(isMaxLevel) { player.deathRayDamage *= 2; soundManager.playAwaken(); } break;
+            case 'death_bloom': if(!player.hasDeathBloom) player.hasDeathBloom = true; player.deathBloomChance += isMaxLevel ? 0.5 : 0.1; player.deathBloomDamage += 20; if(isMaxLevel) soundManager.playAwaken(); break;
+            case 'void_slash': if(!player.hasVoidSlash) player.hasVoidSlash = true; else { player.voidSlashCooldown = Math.max(0.5, player.voidSlashCooldown - 0.3); player.voidSlashDamage += 40; } if(isMaxLevel) { player.voidSlashRadius *= 1.5; soundManager.playAwaken(); } break;
+            case 'turret': if(!player.hasTurret) player.hasTurret = true; else { player.turretCooldown = Math.max(2, player.turretCooldown - 1); player.turretDamage += 10; } if(isMaxLevel) soundManager.playAwaken(); break;
+            case 'shuriken': if(!player.hasShuriken) player.hasShuriken = true; else { player.shurikenCooldown = Math.max(0.5, player.shurikenCooldown - 0.2); player.shurikenDamage += 20; player.shurikenCount += 1; } if(isMaxLevel) { player.shurikenCount = 8; player.shurikenDamage *= 2; soundManager.playAwaken(); } break;
+            case 'scythe': if(!player.hasScythe) player.hasScythe = true; else { player.scytheCooldown = Math.max(0.8, player.scytheCooldown - 0.2); player.scytheDamage += 30; player.scytheRadius += 10; } if(isMaxLevel) { player.scytheRadius += 50; player.scytheDamage *= 2; soundManager.playAwaken(); } break;
+            case 'thorns': if(!player.hasThorns) player.hasThorns = true; else { player.thornsDamage += 20; } if(isMaxLevel) { player.thornsDamage *= 2.5; soundManager.playAwaken(); } break;
+            case 'haste': player.cdr += isMaxLevel ? 0.5 : 0.15; if(isMaxLevel) soundManager.playAwaken(); break;
+            case 'shockwave': if(!player.hasShockwave) player.hasShockwave = true; else { player.shockwaveCooldown = Math.max(1.0, player.shockwaveCooldown - 0.4); player.shockwaveDamage += 20; player.shockwaveRadius += 20;} if(isMaxLevel) { player.shockwaveRadius += 100; player.shockwaveDamage *= 2; soundManager.playAwaken(); } break;
+            case 'meteor': if(!player.hasMeteor) player.hasMeteor = true; else { player.meteorCooldown = Math.max(2.0, player.meteorCooldown - 0.6); player.meteorDamage += 50; player.meteorRadius += 20; } if(isMaxLevel) { player.meteorCount += 2; player.meteorDamage *= 2; soundManager.playAwaken(); } break;
+            case 'arrow': if(!player.hasArrow) player.hasArrow = true; else { player.arrowCooldown = Math.max(0.5, player.arrowCooldown - 0.2); player.arrowDamage += 30; } if(isMaxLevel) { player.arrowDamage *= 2; soundManager.playAwaken(); } break; 
             case 'berserker': break;
             case 'elemental': break;
             case 'hawkeye': player.critChance += isMaxLevel ? 0.3 : 0.1; player.pickupRange += isMaxLevel ? 200 : 50; break;
             case 'xp_scroll': player.xpMultiplier += isMaxLevel ? 0.5 : 0.15; break;
             case 'vampire': player.lifestealChance += isMaxLevel ? 0.1 : 0.03; player.lifestealAmount += isMaxLevel ? 5 : 1; break;
-            case 'frost':
-                if(!player.hasFrost) player.hasFrost = true; else { player.frostCooldown = Math.max(1.0, player.frostCooldown - 0.5); player.frostRadius += 20; player.frostDamage += 10; }
-                if(isMaxLevel) { player.frostRadius += 100; player.frostDamage *= 2; soundManager.playAwaken(); } break;
-            case 'drone':
-                if(!player.hasDrone) player.hasDrone = true; else { player.droneCount += 1; player.droneDamage += 10; }
-                if(isMaxLevel) { player.droneCount += 2; player.droneDamage *= 2; soundManager.playAwaken(); } break;
-            case 'axe':
-                if(!player.hasAxe) player.hasAxe = true; else { player.axeCount += 1; player.axeDamage += 15; player.axeCooldown = Math.max(0.5, player.axeCooldown - 0.2); }
-                if(isMaxLevel) { player.axeCount += 3; player.axeDamage *= 2; soundManager.playAwaken(); } break;
-            case 'missile': 
-                if(!player.hasMissile) player.hasMissile = true; else { player.missileBaseCooldown = Math.max(0.5, player.missileBaseCooldown - 0.3); player.missileDamage += 20; player.missileRadius += 10; }
-                if (isMaxLevel) { player.missileCount += 2; player.missileDamage *= 2; player.missileRadius *= 1.5; soundManager.playAwaken(); } break;
-            case 'blackhole': 
-                if(!player.hasBlackhole) player.hasBlackhole = true; else { player.blackholeBaseCooldown = Math.max(4.0, player.blackholeBaseCooldown - 1.0); player.blackholeRadius += 15; player.blackholeDamage += 10; }
-                if (isMaxLevel) { player.blackholeRadius += 50; player.blackholeDamage *= 2; soundManager.playAwaken(); } break;
+            case 'frost': if(!player.hasFrost) player.hasFrost = true; else { player.frostCooldown = Math.max(1.0, player.frostCooldown - 0.5); player.frostRadius += 20; player.frostDamage += 10; } if(isMaxLevel) { player.frostRadius += 100; player.frostDamage *= 2; soundManager.playAwaken(); } break;
+            case 'drone': if(!player.hasDrone) player.hasDrone = true; else { player.droneCount += 1; player.droneDamage += 10; } if(isMaxLevel) { player.droneCount += 2; player.droneDamage *= 2; soundManager.playAwaken(); } break;
+            case 'axe': if(!player.hasAxe) player.hasAxe = true; else { player.axeCount += 1; player.axeDamage += 15; player.axeCooldown = Math.max(0.5, player.axeCooldown - 0.2); } if(isMaxLevel) { player.axeCount += 3; player.axeDamage *= 2; soundManager.playAwaken(); } break;
+            case 'missile': if(!player.hasMissile) player.hasMissile = true; else { player.missileBaseCooldown = Math.max(0.5, player.missileBaseCooldown - 0.3); player.missileDamage += 20; player.missileRadius += 10; } if (isMaxLevel) { player.missileCount += 2; player.missileDamage *= 2; player.missileRadius *= 1.5; soundManager.playAwaken(); } break;
+            case 'blackhole': if(!player.hasBlackhole) player.hasBlackhole = true; else { player.blackholeBaseCooldown = Math.max(4.0, player.blackholeBaseCooldown - 1.0); player.blackholeRadius += 15; player.blackholeDamage += 10; } if (isMaxLevel) { player.blackholeRadius += 50; player.blackholeDamage *= 2; soundManager.playAwaken(); } break;
             case 'crit': player.critChance += isMaxLevel ? 0.3 : 0.1; player.critMultiplier += isMaxLevel ? 1.0 : 0.3; break;
-            case 'molotov': 
-                if (!player.hasMolotov) player.hasMolotov = true; else { player.molotovBaseCooldown = Math.max(0.5, player.molotovBaseCooldown - 0.4); player.molotovRadius += 15; player.molotovDamage += 10; player.molotovCount += 1; }
-                if (isMaxLevel) { player.molotovCount = 5; player.molotovRadius += 50; player.molotovDamage *= 2; soundManager.playAwaken(); } break;
-            case 'boomerang': 
-                if (!player.hasBoomerang) player.hasBoomerang = true; else { player.boomerangBaseCooldown = Math.max(0.8, player.boomerangBaseCooldown - 0.3); player.boomerangCount += 1; player.boomerangDamage += 15; }
-                if (isMaxLevel) { player.boomerangCount = 6; player.boomerangDamage *= 2; soundManager.playAwaken(); } break;
+            case 'molotov': if (!player.hasMolotov) player.hasMolotov = true; else { player.molotovBaseCooldown = Math.max(0.5, player.molotovBaseCooldown - 0.4); player.molotovRadius += 15; player.molotovDamage += 10; player.molotovCount += 1; } if (isMaxLevel) { player.molotovCount = 5; player.molotovRadius += 50; player.molotovDamage *= 2; soundManager.playAwaken(); } break;
+            case 'boomerang': if (!player.hasBoomerang) player.hasBoomerang = true; else { player.boomerangBaseCooldown = Math.max(0.8, player.boomerangBaseCooldown - 0.3); player.boomerangCount += 1; player.boomerangDamage += 15; } if (isMaxLevel) { player.boomerangCount = 6; player.boomerangDamage *= 2; soundManager.playAwaken(); } break;
             case 'dmg': player.damageMultiplier += isMaxLevel ? 1.0 : 0.35; break; 
             case 'speed': player.fireRateMultiplier += isMaxLevel ? 0.8 : 0.25; break; 
             case 'pierce': player.bulletPierce += isMaxLevel ? 5 : 3; break; 
-            case 'aura':
-                if (!player.hasAura) player.hasAura = true; player.auraRadius += isMaxLevel ? 60 : 30; player.auraDamage += isMaxLevel ? 50 : 20; player.auraTickRate = Math.max(0.05, player.auraTickRate - 0.05); break;
+            case 'aura': if (!player.hasAura) player.hasAura = true; player.auraRadius += isMaxLevel ? 60 : 30; player.auraDamage += isMaxLevel ? 50 : 20; player.auraTickRate = Math.max(0.05, player.auraTickRate - 0.05); break;
             case 'heal': player.hp = Math.min(player.maxHp, player.hp + 100); if(isMaxLevel) { player.maxHp += 200; player.hp = player.maxHp; } break;
             case 'multishot': if(isMaxLevel) { soundManager.playAwaken(); } else player.projectileCount += 2; break;
-            case 'lightning':
-                player.hasLightning = true; player.lightningDamage += isMaxLevel ? 100 : 30; player.lightningBaseCooldown = Math.max(0.2, player.lightningBaseCooldown - 0.15); player.lightningTargets += isMaxLevel ? 3 : 1;
-                if(isMaxLevel) soundManager.playAwaken(); break;
+            case 'lightning': player.hasLightning = true; player.lightningDamage += isMaxLevel ? 100 : 30; player.lightningBaseCooldown = Math.max(0.2, player.lightningBaseCooldown - 0.15); player.lightningTargets += isMaxLevel ? 3 : 1; if(isMaxLevel) soundManager.playAwaken(); break;
             case 'guardian': player.guardianCount += isMaxLevel ? 4 : 2; if(isMaxLevel) soundManager.playAwaken(); break;
             case 'magnet': player.pickupRange += isMaxLevel ? 400 : 100; break; 
             case 'movespeed': player.speed *= isMaxLevel ? 1.5 : 1.2; break; 
@@ -1754,17 +1876,70 @@
     }
 
     function finishLevelUp() {
-        levelupPanel.style.display = 'none'; joystickZone.style.display = 'block';
-        lastTime = performance.now(); gameState = 'playing'; requestAnimationFrame(gameLoop);
+        pendingUpgrades--; // 消耗一次升级机会
+        if (pendingUpgrades > 0) {
+            // 如果还有剩余的升级机会，直接刷新面板继续选
+            openUpgradePanel();
+        } else {
+            // 选完了，恢复游戏
+            levelupPanel.style.display = 'none'; joystickZone.style.display = 'block';
+            lastTime = performance.now(); gameState = 'playing'; requestAnimationFrame(gameLoop);
+        }
     }
 
-    function drawGrid() {
-        ctx.strokeStyle = '#2a2a3e'; ctx.lineWidth = 1; const gridSize = 100;
-        const startX = Math.floor(camera.x / gridSize) * gridSize; const startY = Math.floor(camera.y / gridSize) * gridSize;
+    function drawMap() {
+        const theme = mapThemes[selectedMap];
+        ctx.strokeStyle = theme.grid; 
+        ctx.lineWidth = 1; 
+        const gridSize = 100;
+        
+        // 基于缩放比例扩大渲染范围，防止边缘穿帮
+        const viewW = canvas.width / currentZoom;
+        const viewH = canvas.height / currentZoom;
+        
+        const startX = Math.floor(camera.x / gridSize) * gridSize - gridSize; 
+        const startY = Math.floor(camera.y / gridSize) * gridSize - gridSize;
+        
         ctx.beginPath();
-        for (let x = startX; x < camera.x + canvas.width + gridSize; x += gridSize) { ctx.moveTo(x, camera.y); ctx.lineTo(x, camera.y + canvas.height); }
-        for (let y = startY; y < camera.y + canvas.height + gridSize; y += gridSize) { ctx.moveTo(camera.x, y); ctx.lineTo(camera.x + canvas.width, y); }
+        for (let x = startX; x < camera.x + viewW + gridSize * 2; x += gridSize) { ctx.moveTo(x, camera.y - gridSize); ctx.lineTo(x, camera.y + viewH + gridSize); }
+        for (let y = startY; y < camera.y + viewH + gridSize * 2; y += gridSize) { ctx.moveTo(camera.x - gridSize, y); ctx.lineTo(camera.x + viewW + gridSize, y); }
         ctx.stroke();
+
+        for (let x = startX; x < camera.x + viewW + gridSize * 2; x += gridSize) {
+            for (let y = startY; y < camera.y + viewH + gridSize * 2; y += gridSize) {
+                const hash = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+                const rand = hash - Math.floor(hash);
+
+                if (selectedMap === 'forest') {
+                    if (rand > 0.75) {
+                        ctx.fillStyle = '#0f2015'; ctx.beginPath(); ctx.arc(x + 50, y + 50, 40 + rand*20, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = '#142e1d'; ctx.beginPath(); ctx.arc(x + 40 + rand*10, y + 40 + rand*10, 25 + rand*15, 0, Math.PI*2); ctx.fill();
+                    } else if (rand < 0.1) { ctx.fillStyle = '#1a3b25'; ctx.fillRect(x + 20, y + 80, 10, 20); ctx.fillRect(x + 25, y + 75, 10, 25); }
+                } else if (selectedMap === 'city') {
+                    if (rand > 0.85) {
+                        ctx.fillStyle = (rand > 0.92) ? 'rgba(0, 245, 212, 0.03)' : 'rgba(247, 37, 133, 0.03)'; ctx.fillRect(x + 10, y + 10, 80, 80);
+                        ctx.strokeStyle = (rand > 0.92) ? 'rgba(0, 245, 212, 0.15)' : 'rgba(247, 37, 133, 0.15)'; ctx.lineWidth = 2; ctx.strokeRect(x + 10, y + 10, 80, 80);
+                    } else if (rand < 0.15) { ctx.fillStyle = 'rgba(255, 255, 255, 0.03)'; for(let i=0; i<4; i++) ctx.fillRect(x + 15 + i*20, y + 20, 10, 60); }
+                } else if (selectedMap === 'desert') {
+                    // 沙漠：沙丘和仙人掌
+                    if (rand > 0.85) {
+                        ctx.fillStyle = 'rgba(120, 90, 40, 0.4)'; ctx.beginPath(); ctx.ellipse(x + 50, y + 50, 30, 15, rand*Math.PI, 0, Math.PI*2); ctx.fill();
+                    } else if (rand < 0.1) {
+                        ctx.fillStyle = '#2b5a32'; ctx.fillRect(x + 45, y + 30, 10, 40); ctx.fillRect(x + 35, y + 45, 10, 15); ctx.fillRect(x + 55, y + 35, 10, 20);
+                    }
+                } else if (selectedMap === 'snow') {
+                    // 雪地：冰晶刺和积雪
+                    if (rand > 0.85) {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; ctx.beginPath(); ctx.arc(x + 50, y + 50, 40, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; ctx.beginPath(); ctx.arc(x + 50, y + 40, 20, 0, Math.PI*2); ctx.fill();
+                    } else if (rand < 0.1) {
+                        ctx.fillStyle = '#63b3ed'; ctx.beginPath(); ctx.moveTo(x+50, y+20); ctx.lineTo(x+60, y+80); ctx.lineTo(x+40, y+80); ctx.fill();
+                    }
+                } else {
+                    if (rand > 0.95) { ctx.fillStyle = `rgba(255, 255, 255, ${0.1 + rand*0.2})`; ctx.beginPath(); ctx.arc(x + rand*80, y + rand*80, 1 + rand*2, 0, Math.PI*2); ctx.fill(); }
+                }
+            }
+        }
     }
 
     function gameLoop(timestamp) {
@@ -1781,7 +1956,7 @@
         slashes.forEach(s => s.update(dt)); laserLines.forEach(l => l.update(dt)); orbitals.forEach(o => o.update(dt));
         shockwaves.forEach(sw => sw.update(dt)); meteors.forEach(m => m.update(dt)); arrows.forEach(a => a.update(dt));
         shurikens.forEach(s => s.update(dt)); turrets.forEach(t => t.update(dt)); voidSlashes.forEach(vs => vs.update(dt));
-        enemies.forEach(e => e.update(dt));
+        enemies.forEach(e => e.update(dt)); enemyBullets.forEach(eb => eb.update(dt));
         gems.forEach(g => g.update(dt)); chests.forEach(c => c.update(dt)); 
         floatingTexts.forEach(ft => ft.update(dt));
         effects.forEach(eff => eff.update(dt)); damageZones.forEach(dz => dz.update(dt));
@@ -1834,6 +2009,15 @@
             }
         }
 
+        // 处理怪物弹幕打中玩家
+        for (let eb of enemyBullets) {
+            if (eb.markedForDeletion) continue;
+            if (Math.hypot(eb.x - player.x, eb.y - player.y) < eb.radius + player.radius) {
+                player.takeDamage(eb.damage);
+                eb.markedForDeletion = true;
+            }
+        }
+
         bullets = bullets.filter(b => !b.markedForDeletion); boomerangs = boomerangs.filter(b => !b.markedForDeletion); 
         missiles = missiles.filter(m => !m.markedForDeletion); blackHoles = blackHoles.filter(bh => !bh.markedForDeletion); axes = axes.filter(a => !a.markedForDeletion);
         slashes = slashes.filter(s => !s.markedForDeletion); laserLines = laserLines.filter(l => l.life > 0); orbitals = orbitals.filter(o => !o.markedForDeletion);
@@ -1841,15 +2025,36 @@
         shurikens = shurikens.filter(s => !s.markedForDeletion); turrets = turrets.filter(t => !t.markedForDeletion); voidSlashes = voidSlashes.filter(vs => !vs.markedForDeletion);
         enemies = enemies.filter(e => !e.markedForDeletion); gems = gems.filter(g => !g.markedForDeletion); chests = chests.filter(c => !c.markedForDeletion);
         floatingTexts = floatingTexts.filter(ft => ft.life > 0); effects = effects.filter(eff => eff.life > 0); damageZones = damageZones.filter(dz => dz.lifeTime > 0);
+        enemyBullets = enemyBullets.filter(eb => !eb.markedForDeletion);
 
-        camera.x = player.x - canvas.width / 2; camera.y = player.y - canvas.height / 2;
+        // 计算带缩放的相机位置
+        camera.x = player.x - canvas.width / (2 * currentZoom); 
+        camera.y = player.y - canvas.height / (2 * currentZoom);
 
-        ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.save(); ctx.translate(-camera.x, -camera.y);
+        ctx.fillStyle = mapThemes[selectedMap].bg; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.save(); 
+        ctx.scale(currentZoom, currentZoom);
+        ctx.translate(-camera.x, -camera.y);
 
-        drawGrid(); damageZones.forEach(dz => dz.draw()); orbitals.forEach(o => o.draw()); blackHoles.forEach(bh => bh.draw());
+        drawMap(); 
+        
+        // 绘制终极领主结界
+        if (ultimateBossArena) {
+            ctx.beginPath();
+            ctx.arc(ultimateBossArena.x, ultimateBossArena.y, ultimateBossArena.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(239, 35, 60, ${0.5 + Math.sin(gameTime * 5) * 0.3})`; // 呼吸发光红圈
+            ctx.lineWidth = 10;
+            ctx.stroke();
+            // 内侧淡红填充
+            ctx.fillStyle = 'rgba(239, 35, 60, 0.05)';
+            ctx.fill();
+        }
+
+        damageZones.forEach(dz => dz.draw()); orbitals.forEach(o => o.draw()); blackHoles.forEach(bh => bh.draw());
         gems.forEach(g => g.draw()); chests.forEach(c => c.draw()); turrets.forEach(t => t.draw());
-        enemies.forEach(e => e.draw()); player.draw();
+        enemies.forEach(e => e.draw()); player.draw(); enemyBullets.forEach(eb => eb.draw());
         slashes.forEach(s => s.draw()); shockwaves.forEach(sw => sw.draw()); laserLines.forEach(l => l.draw()); meteors.forEach(m => m.draw()); voidSlashes.forEach(vs => vs.draw());
         bullets.forEach(b => b.draw()); arrows.forEach(a => a.draw()); boomerangs.forEach(b => b.draw()); 
         missiles.forEach(m => m.draw()); axes.forEach(a => a.draw()); shurikens.forEach(s => s.draw());
@@ -1859,7 +2064,8 @@
         if (gameState === 'playing') requestAnimationFrame(gameLoop);
     }
 
-    ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = mapThemes[selectedMap].bg; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 </script>
 </body>
 </html>
