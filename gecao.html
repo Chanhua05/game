@@ -12,10 +12,12 @@
         #xp-bar-container { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 50%; height: 20px; background-color: rgba(0, 0, 0, 0.5); border: 2px solid #4a4e69; border-radius: 10px; overflow: hidden; }
         #xp-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #00b4d8, #0077b6); transition: width 0.2s; }
         #level-text { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: bold; text-shadow: 1px 1px 2px black; }
-        #timer-text { position: absolute; top: 12px; left: 20px; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
         
-        /* 羁绊显示面板 (优化版) */
-        #synergy-hud { position: absolute; top: 50%; left: 10px; transform: translateY(-50%); font-size: 14px; background: rgba(20, 25, 45, 0.85); padding: 12px; border-radius: 12px; border: 2px solid #4a4e69; display: none; flex-direction: column; gap: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.8); backdrop-filter: blur(4px); pointer-events: none; z-index: 50; min-width: 170px; }
+        #score-text { position: absolute; top: 65px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: bold; color: #ffd166; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        
+        #timer-text { position: absolute; top: 15px; left: 20px; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        
+        #synergy-hud { position: absolute; top: 55px; left: 20px; display: none; flex-direction: column; gap: 6px; pointer-events: none; z-index: 50; max-width: 40%; }
 
         #settings-btn { position: absolute; top: 12px; right: 20px; background-color: #4a4e69; color: white; border: 2px solid #fff; border-radius: 8px; padding: 5px 15px; font-size: 18px; cursor: pointer; pointer-events: auto; display: none; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
         #settings-btn:hover { background-color: #e94560; }
@@ -27,7 +29,7 @@
         .gm-actions button.max { background: #ff5c77; color: white; }
         .gm-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background-color: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; pointer-events: auto; display: none; }
+        #joystick-zone { position: absolute; bottom: 40px; left: 80px; width: 120px; height: 120px; background-color: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; pointer-events: auto; display: none; }
         #joystick-knob { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background-color: rgba(255, 255, 255, 0.6); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
         .panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(22, 33, 62, 0.95); padding: 30px; border-radius: 15px; border: 3px solid #e94560; text-align: center; display: none; pointer-events: auto; box-shadow: 0 0 30px rgba(0,0,0,0.8); min-width: 340px; max-height: 85vh; overflow-y: auto; }
@@ -80,9 +82,10 @@
             <div id="xp-bar"></div>
         </div>
         <div id="level-text" style="display: none;">Lv. 1</div>
+        <div id="score-text" style="display: none;">🏆 分数: 0</div>
         <div id="timer-text" style="display: none;">10:00</div>
         
-        <!-- 羁绊雷达面板 -->
+        <!-- 竖向简化的羁绊雷达面板 -->
         <div id="synergy-hud"></div>
 
         <div id="boss-ui">
@@ -117,6 +120,9 @@
                 <div class="choice-card" id="map-forest" onclick="selectMap('forest')"><div class="choice-icon">🌲</div><div class="choice-name">森林</div></div>
                 <div class="choice-card" id="map-desert" onclick="selectMap('desert')"><div class="choice-icon">🏜️</div><div class="choice-name">沙漠</div></div>
                 <div class="choice-card" id="map-snow" onclick="selectMap('snow')"><div class="choice-icon">❄️</div><div class="choice-name">雪地</div></div>
+                <div class="choice-card" id="map-dungeon" onclick="selectMap('dungeon')"><div class="choice-icon">⛓️</div><div class="choice-name">地牢</div></div>
+                <div class="choice-card" id="map-underworld" onclick="selectMap('underworld')"><div class="choice-icon">👻</div><div class="choice-name">冥界</div></div>
+                <div class="choice-card" id="map-holyland" onclick="selectMap('holyland')"><div class="choice-icon">🏛️</div><div class="choice-name">圣地</div></div>
             </div>
 
             <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
@@ -171,7 +177,7 @@
         <div id="leaderboard-panel" class="panel">
             <h2>🏆 英雄榜 🏆</h2>
             <table style="width: 100%; color: white; text-align: left; border-collapse: collapse; margin-top: 15px; font-size: 14px;">
-                <thead><tr style="border-bottom: 2px solid #4a4e69;"><th>职业/地图</th><th>模式</th><th>时间</th><th>击杀</th></tr></thead>
+                <thead><tr style="border-bottom: 2px solid #4a4e69;"><th>职业/地图</th><th>模式</th><th>分数/击杀</th></tr></thead>
                 <tbody id="leaderboard-list"></tbody>
             </table>
             <br><button class="action-btn" onclick="hideLeaderboard()">返回主页</button>
@@ -200,6 +206,7 @@
     const xpBar = document.getElementById('xp-bar');
     const xpContainer = document.getElementById('xp-bar-container');
     const levelText = document.getElementById('level-text');
+    const scoreText = document.getElementById('score-text');
     const timerText = document.getElementById('timer-text');
     const startPanel = document.getElementById('start-panel');
     const levelupPanel = document.getElementById('levelup-panel');
@@ -222,6 +229,7 @@
 
     let gameState = 'start'; 
     let lastTime = 0; let gameTime = 0; let killCount = 0;
+    let gameScore = 0; 
     let pendingUpgrades = 0; 
     let currentMode = 'classic'; 
     let selectedClass = 'warrior'; 
@@ -235,11 +243,14 @@
     let activeUltimateBoss = null;
 
     const mapThemes = {
-        classic: { bg: '#1a1a2e', grid: '#2a2a3e', name: '经典' },
-        city:    { bg: '#0b0c10', grid: '#1f2833', name: '都市' },
-        forest:  { bg: '#0a120d', grid: '#132418', name: '森林' },
-        desert:  { bg: '#4a3b22', grid: '#5c4a2e', name: '沙漠' },
-        snow:    { bg: '#2c3e50', grid: '#34495e', name: '雪地' }
+        classic:    { bg: '#1a1a2e', grid: '#2a2a3e', name: '经典' },
+        city:       { bg: '#0b0c10', grid: '#1f2833', name: '都市' },
+        forest:     { bg: '#0a120d', grid: '#132418', name: '森林' },
+        desert:     { bg: '#4a3b22', grid: '#5c4a2e', name: '沙漠' },
+        snow:       { bg: '#2c3e50', grid: '#34495e', name: '雪地' },
+        dungeon:    { bg: '#1e1e24', grid: '#2b2b36', name: '地牢' },
+        underworld: { bg: '#110518', grid: '#2d1438', name: '冥界' },
+        holyland:   { bg: '#1a202c', grid: '#854d0e', name: '圣地' }
     };
 
     let joyActive = false; let joyDx = 0, joyDy = 0;
@@ -287,7 +298,7 @@
 
     function selectMap(m) {
         selectedMap = m;
-        ['classic', 'city', 'forest', 'desert', 'snow'].forEach(id => document.getElementById(`map-${id}`).className = 'choice-card');
+        ['classic', 'city', 'forest', 'desert', 'snow', 'dungeon', 'underworld', 'holyland'].forEach(id => document.getElementById(`map-${id}`).className = 'choice-card');
         document.getElementById(`map-${m}`).className = 'choice-card active';
         ctx.fillStyle = mapThemes[selectedMap].bg; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -986,7 +997,6 @@
             this.synBladeTimer = 0;
             this.synTechTimer = 0;
 
-            // 职业基础设定调整
             this.baseFireCooldown = 0.8; 
             if (pClass === 'warrior') { this.maxHp = 150; this.hp = 150; this.speed = 220; this.damageMultiplier = 1.2; this.color = '#e63946'; this.baseFireCooldown = 0.6; } 
             else if (pClass === 'mage') { this.maxHp = 80; this.hp = 80; this.speed = 240; this.damageMultiplier = 1.5; this.color = '#9b5de5'; this.baseFireCooldown = 1.0; } 
@@ -1587,6 +1597,10 @@
             let levelScaling = 1 + (player.level * 0.15); 
             let hpScale = timeScaling * levelScaling;
             
+            if (gameTime >= 300) {
+                hpScale *= 10 + ((gameTime - 300) / 30);
+            }
+            
             let dmgScaling = 1 + (gameTime / 120) + (player.level * 0.05);
 
             if (currentMode === 'hard') { hpScale *= 1.5; dmgScaling *= 1.5; }
@@ -1782,7 +1796,9 @@
             }
 
             if (this.hp <= 0 && !this.markedForDeletion) {
-                this.markedForDeletion = true; killCount++;
+                this.markedForDeletion = true; 
+                killCount++;
+                gameScore += this.xpValue; 
                 
                 if (player.lifestealChance > 0 && Math.random() < player.lifestealChance) {
                     player.hp = Math.min(player.maxHp, player.hp + player.lifestealAmount);
@@ -1945,18 +1961,18 @@
         currentMode = mode; resetInput(); 
         player = new Player(selectedClass); 
         
-        // 重置所有实体
         enemies = []; bullets = []; boomerangs = []; missiles = []; blackHoles = []; axes = []; slashes = []; laserLines = []; orbitals = []; shockwaves = []; meteors = []; arrows = []; shurikens = []; turrets = []; voidSlashes = [];
         gems = []; chests = []; floatingTexts = []; effects = []; damageZones = []; enemyBullets = [];
         baseSlashes = []; magicAOEs = []; baseArrows = []; flyingSwords = []; 
         
-        gameTime = 0; killCount = 0; spawnInterval = 1.5; eliteTimer = 20; lastBossMinute = 0; lastUltimateBossMinute = 0;
+        gameTime = 0; killCount = 0; gameScore = 0; 
+        spawnInterval = 1.5; eliteTimer = 20; lastBossMinute = 0; lastUltimateBossMinute = 0;
         pendingUpgrades = 0; 
         ultimateBossArena = null; activeUltimateBoss = null; bossUi.style.display = 'none';
         
         startPanel.style.display = 'none'; gameoverPanel.style.display = 'none'; levelupPanel.style.display = 'none'; leaderboardPanel.style.display = 'none'; settingsPanel.style.display = 'none'; gmPanel.style.display = 'none';
         document.getElementById('buff-trigger-btn').style.display = 'none'; 
-        xpContainer.style.display = 'block'; levelText.style.display = 'block'; timerText.style.display = 'block'; settingsBtn.style.display = 'block'; joystickZone.style.display = 'block'; 
+        xpContainer.style.display = 'block'; levelText.style.display = 'block'; scoreText.style.display = 'block'; timerText.style.display = 'block'; settingsBtn.style.display = 'block'; joystickZone.style.display = 'block'; 
         
         if (currentMode === 'debug') gmBtn.style.display = 'block'; else gmBtn.style.display = 'none';
         
@@ -1966,7 +1982,7 @@
 
     function gameOver(isWin) {
         gameState = 'gameover'; soundManager.stopBGM(); resetInput();
-        xpContainer.style.display = 'none'; levelText.style.display = 'none'; timerText.style.display = 'none'; settingsBtn.style.display = 'none'; gmBtn.style.display = 'none'; joystickZone.style.display = 'none'; bossUi.style.display = 'none';
+        xpContainer.style.display = 'none'; levelText.style.display = 'none'; scoreText.style.display = 'none'; timerText.style.display = 'none'; settingsBtn.style.display = 'none'; gmBtn.style.display = 'none'; joystickZone.style.display = 'none'; bossUi.style.display = 'none';
         synergyHud.style.display = 'none';
         saveScore(isWin); 
         
@@ -1980,7 +1996,7 @@
         let modeName = '🌿 经典'; if(currentMode === 'rampage') modeName = '🩸 狂暴'; if(currentMode === 'hard') modeName = '💀 困难'; if(currentMode === 'debug') modeName = '🐛 调试';
         let className = '🗡️ 战士'; if(selectedClass === 'mage') className = '🧙‍♂️ 法师'; if(selectedClass === 'archer') className = '🏹 射手'; if(selectedClass === 'swordmaster') className = '⚔️ 剑侠';
 
-        finalStats.innerHTML = `职业: ${className}<br>地图: ${mapThemes[selectedMap].name}<br>模式: ${modeName}<br>存活时间: ${formatTime(gameTime)} <br> 击杀数: ${killCount} <br> 最终等级: ${player.level}`;
+        finalStats.innerHTML = `职业: ${className}<br>地图: ${mapThemes[selectedMap].name}<br>模式: ${modeName}<br>存活时间: ${formatTime(gameTime)} <br> 分数: ${gameScore} (击杀: ${killCount}) <br> 最终等级: ${player.level}`;
         gameoverPanel.style.display = 'block';
     }
 
@@ -1988,30 +2004,22 @@
         if (!player || !player.synergyScores) { synergyHud.style.display = 'none'; return; }
         
         const schools = [
-            { id: 'elemental', icon: '🔥', name: '毁灭元素', desc: '陨石洗地', color: '#ff5c77' },
-            { id: 'blade', icon: '⚔️', name: '极意剑阵', desc: '万剑归宗', color: '#fca311' },
-            { id: 'tech', icon: '⚙️', name: '赛博科技', desc: '电磁瘫痪', color: '#4cc9f0' },
-            { id: 'blood', icon: '🩸', name: '嗜血狂战', desc: '暴击血爆', color: '#ef233c' }
+            { id: 'elemental', icon: '🔥', color: '#ff5c77' },
+            { id: 'blade', icon: '⚔️', color: '#fca311' },
+            { id: 'tech', icon: '⚙️', color: '#4cc9f0' },
+            { id: 'blood', icon: '🩸', color: '#ef233c' }
         ];
         
-        let html = '<div style="color:#00f5d4; font-weight:bold; margin-bottom:2px; border-bottom:1px solid #4a4e69; padding-bottom:5px; text-align:center;">🌟 激活羁绊</div>';
+        let html = '';
         
         schools.forEach(s => {
             const score = player.synergyScores[s.id] || 0;
             if (score >= 3) { 
                 let level = Math.floor((score - 3) / 5) + 1;
-                let nextScore = 3 + level * 5; 
                 
                 html += `
-                <div style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; border-left: 4px solid ${s.color}; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                        <span style="color:${s.color}; font-weight:bold;">${s.icon} ${s.name}</span>
-                        <span style="color:#fff; font-weight:bold; font-style:italic; font-size:15px; text-shadow: 0 0 5px ${s.color};">Lv.${level}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; font-size:12px; align-items:center;">
-                        <span style="color:#ffd166;">${s.desc}</span>
-                        <span style="color:#aaa; background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:4px;">${score}/${nextScore}分</span>
-                    </div>
+                <div style="background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 12px; border: 1px solid ${s.color}; display: flex; align-items: center; gap: 4px; box-shadow: 0 0 8px ${s.color}60;">
+                    <span>${s.icon}</span><span style="color:${s.color}; font-weight:bold; font-style:italic; font-size:14px; text-shadow: 0 0 2px #000;">Lv.${level}</span>
                 </div>`;
             }
         });
@@ -2023,6 +2031,8 @@
         const percent = (player.xp / player.xpNeeded) * 100; xpBar.style.width = `${percent}%`; 
         levelText.innerText = `Lv. ${player.level}`; 
         
+        scoreText.innerText = `🏆 分数: ${gameScore}`;
+
         if (currentMode === 'classic') {
             let timeLeft = 600 - gameTime;
             if (timeLeft <= 0) { timeLeft = 0; gameOver(true); }
@@ -2101,14 +2111,18 @@
                 let type = 'tier1'; 
                 const rand = Math.random();
                 
-                if (gameTime > 30 || player.level > 5) {
-                    if (rand < 0.3) type = 'tier2'; 
-                }
-                if (gameTime > 90 || player.level > 15) {
-                    if (rand > 0.8) type = 'tier3'; 
-                }
-                if (gameTime > 150 || player.level > 25) {
-                    if (rand > 0.9) type = 'tier4_shooter'; 
+                if (gameTime >= 300) {
+                    type = (rand < 0.6) ? 'tier3' : 'tier4_shooter';
+                } else {
+                    if (gameTime > 30 || player.level > 5) {
+                        if (rand < 0.3) type = 'tier2'; 
+                    }
+                    if (gameTime > 90 || player.level > 15) {
+                        if (rand > 0.8) type = 'tier3'; 
+                    }
+                    if (gameTime > 150 || player.level > 25) {
+                        if (rand > 0.9) type = 'tier4_shooter'; 
+                    }
                 }
 
                 enemies.push(new Enemy(ex, ey, type));
@@ -2283,6 +2297,32 @@
                     } else if (rand < 0.1) {
                         ctx.fillStyle = '#63b3ed'; ctx.beginPath(); ctx.moveTo(x+50, y+20); ctx.lineTo(x+60, y+80); ctx.lineTo(x+40, y+80); ctx.fill();
                     }
+                } else if (selectedMap === 'dungeon') {
+                    if (rand > 0.85) {
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.fillRect(x + 20, y + 20, 60, 60);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.moveTo(x+35, y+20); ctx.lineTo(x+35, y+80); ctx.moveTo(x+65, y+20); ctx.lineTo(x+65, y+80); ctx.stroke();
+                    } else if (rand < 0.1) {
+                        ctx.fillStyle = 'rgba(139, 0, 0, 0.15)'; ctx.beginPath(); ctx.arc(x + 50, y + 50, 15 + rand*30, 0, Math.PI*2); ctx.fill();
+                    }
+                } else if (selectedMap === 'underworld') {
+                    if (rand > 0.85) {
+                        let bob = Math.sin(gameTime * 2 + x);
+                        ctx.fillStyle = 'rgba(138, 43, 226, 0.15)'; ctx.beginPath(); ctx.arc(x + 50, y + 50 + bob*10, 20, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = 'rgba(138, 43, 226, 0.5)'; ctx.beginPath(); ctx.arc(x + 50, y + 50 + bob*10, 6, 0, Math.PI*2); ctx.fill();
+                    } else if (rand < 0.1) {
+                        ctx.fillStyle = 'rgba(255, 0, 50, 0.1)'; ctx.beginPath(); ctx.moveTo(x+50, y+30); ctx.lineTo(x+60, y+70); ctx.lineTo(x+40, y+70); ctx.fill();
+                    }
+                } else if (selectedMap === 'holyland') {
+                    if (rand > 0.85) {
+                        ctx.strokeStyle = 'rgba(253, 224, 71, 0.2)'; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.arc(x + 50, y + 50, 20, 0, Math.PI*2); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(x+50, y+20); ctx.lineTo(x+50, y+80); ctx.moveTo(x+20, y+50); ctx.lineTo(x+80, y+50); ctx.stroke();
+                    } else if (rand < 0.1) {
+                        let rise = (gameTime * 30 + x) % 100;
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; ctx.beginPath(); ctx.arc(x + 50, y + 100 - rise, 3, 0, Math.PI*2); ctx.fill();
+                        ctx.shadowBlur = 10; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
+                    }
                 } else {
                     if (rand > 0.95) { ctx.fillStyle = `rgba(255, 255, 255, ${0.1 + rand*0.2})`; ctx.beginPath(); ctx.arc(x + rand*80, y + rand*80, 1 + rand*2, 0, Math.PI*2); ctx.fill(); }
                 }
@@ -2305,7 +2345,6 @@
         shockwaves.forEach(sw => sw.update(dt)); meteors.forEach(m => m.update(dt)); arrows.forEach(a => a.update(dt));
         shurikens.forEach(s => s.update(dt)); turrets.forEach(t => t.update(dt)); voidSlashes.forEach(vs => vs.update(dt));
         
-        // 更新普攻实体
         baseSlashes.forEach(bs => bs.update(dt)); magicAOEs.forEach(ma => ma.update(dt));
         baseArrows.forEach(ba => ba.update(dt)); flyingSwords.forEach(fs => fs.update(dt));
         
@@ -2325,7 +2364,6 @@
             }
         }
         
-        // 普攻碰撞检测 (基础箭矢和飞剑)
         for (let a of baseArrows) {
             if (a.markedForDeletion) continue;
             for (let e of enemies) {
@@ -2436,7 +2474,6 @@
         bullets.forEach(b => b.draw()); arrows.forEach(a => a.draw()); boomerangs.forEach(b => b.draw()); 
         missiles.forEach(m => m.draw()); axes.forEach(a => a.draw()); shurikens.forEach(s => s.draw());
         
-        // 绘制普攻实体
         baseSlashes.forEach(bs => bs.draw()); magicAOEs.forEach(ma => ma.draw());
         baseArrows.forEach(ba => ba.draw()); flyingSwords.forEach(fs => fs.draw());
 
